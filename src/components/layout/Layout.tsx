@@ -10,7 +10,7 @@ export function Layout() {
       <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
       <main className="flex-1 p-4">
-        Content here
+        
       </main>
 
       <Sidebar
