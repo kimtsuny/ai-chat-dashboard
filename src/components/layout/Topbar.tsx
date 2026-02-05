@@ -22,14 +22,14 @@ interface TopbarProps {
 
 export function Topbar({ onMenuClick }: TopbarProps) {
     return (
-        <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
+        <header className="flex items-center justify-between h-14 px-2 pt-3 bg-background">
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ">
                 <Button variant="ghost" size="icon" onClick={onMenuClick}>
                     <Menu className="w-5 h-5" />
                 </Button>
 
-                <h1 className="font-semibold text-lg">
+                <h1 className="font-semibold text-lg md:hidden">
                     Universe
                 </h1>
             </div>
