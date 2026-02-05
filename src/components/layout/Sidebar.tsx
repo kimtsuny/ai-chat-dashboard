@@ -11,7 +11,7 @@ export function Sidebar(){
             <SheetContent>
                 <h2>
                     Universe
-                fuck you PC
+                
 
                 </h2>
             </SheetContent>
