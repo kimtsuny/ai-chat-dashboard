@@ -7,6 +7,7 @@ onOpenChange: (open: boolean) => void
 desktopOpen: boolean
 }
 
+
 export function Sidebar({open, onOpenChange, desktopOpen}: SideBarProps){
     return (
     <>
