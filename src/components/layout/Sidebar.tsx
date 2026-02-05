@@ -11,7 +11,7 @@ export function Sidebar(){
             <SheetContent>
                 <h2>
                     Universe
-                ggg
+                fuck you mobile
 
                 </h2>
             </SheetContent>
