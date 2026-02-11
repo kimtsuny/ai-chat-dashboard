@@ -1,5 +1,5 @@
 import ChatCards from '@/components/chat/ChatCards'
-import { ChatInput } from '@/components/chat/ChatInput'
+import ChatInput from '@/components/chat/ChatInput'
 import ChatWelcome from '@/components/chat/ChatWelcome'
 import React from 'react'
 
