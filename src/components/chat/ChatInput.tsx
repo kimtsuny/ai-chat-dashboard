@@ -5,13 +5,24 @@ import { Paperclip, SendHorizontal, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 
-const ChatInput = () => {
+const ChatInput = ({onSend}) => {
+  const [text, setText] = useState('')
+
+  function handleSubmit(e:any){
+e.preventDefault()
+if (!text.trim()) return;
+onSend(text)
+setText("")
+  }
   return (
-   <form className='mx-auto mt-3 md:mt-10 max-w-3xl w-full p-3 md:p-1'>
+   <form className='mx-auto mt-3 md:mt-10 max-w-3xl w-full p-3 md:p-1 mb-7'
+   onSubmit={handleSubmit}
+   >
 <div className='rounded-3xl p-3 shadow-[0_18px_60px_rgba(15,23,42,0.10)]'>
 <div className="flex items-start gap-2 sm:gap-3">
           <Textarea
-            
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             placeholder="Ask about shit..."
             className="min-h-[72px] 
     min-w-0 

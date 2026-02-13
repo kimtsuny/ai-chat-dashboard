@@ -6,7 +6,8 @@ import {
     CardTitle,
     CardDescription,
 } from "@/components/ui/card"
-import { Plus, Zap } from 'lucide-react'
+
+import { Orbit } from 'lucide-react';
 
 type ChatCard = {
     title: string
@@ -41,7 +42,7 @@ const ChatCards = () => {
                     >
                         <CardHeader className="flex flex-col items-start gap-2 p-2 md:p-3">
                             <div className="flex h-7 w-7 md:h-10 md:w-10 items-center justify-center rounded-2xl bg-black/85  shadow-sm">
-                                <Zap className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                <Orbit className="h-3 w-3 md:h-4 md:w-4 text-white" />
                             </div>
 
                             <div className="space-y-1">

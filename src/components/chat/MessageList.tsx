@@ -1,28 +1,27 @@
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import React from "react";
 
-interface SidebarProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
-
-export function Sidebar({ open, onOpenChange }: SidebarProps) {
+const MessageList = ({ messages }: any) => {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-64 p-4">
-        <h2 className="font-semibold text-lg mb-4">
-          Universe
-        </h2>
+    <div className="flex flex-col gap-3 overflow-hidden items-end mx-auto mt-3 md:mt-10 max-w-3xl w-full p-3 md:p-1">
+      {messages.map((msg: any) => (
+        <div
+          key={msg.id}
+          className="
+            border border-border
+            rounded-2xl
+            px-4 py-3
+            bg-background
+            shadow-sm
+            max-w-xl
+            whitespace-pre-wrap
+            leading-relaxed
+          "
+        >
+          {msg.content}
+        </div>
+      ))}
+    </div>
+  );
+};
 
-        <nav className="space-y-2">
-          <div className="p-2 rounded hover:bg-muted cursor-pointer">
-            Chat
-          </div>
-
-          <div className="p-2 rounded hover:bg-muted cursor-pointer">
-            Dashboard
-          </div>
-        </nav>
-      </SheetContent>
-    </Sheet>
-  )
-}
+export default MessageList;
