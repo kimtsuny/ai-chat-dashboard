@@ -27,7 +27,7 @@ function handleSidebarOpen() {
     <div className="flex flex-1 flex-col ">
       <Topbar onMenuClick={handleSidebarOpen} />
 
-<main className=" flex flex-1 overflow-auto">
+<main className="flex flex-1 flex-col min-h-0">
   <Chat/>
 </main>
       

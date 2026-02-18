@@ -15,7 +15,7 @@ onSend(text)
 setText("")
   }
   return (
-   <form className='mx-auto mt-3 md:mt-10 max-w-3xl w-full p-3 md:p-1 mb-7'
+   <form className='mx-auto max-w-3xl w-full p-3 md:p-1 mb-7'
    onSubmit={handleSubmit}
    >
 <div className='rounded-3xl p-3 shadow-[0_18px_60px_rgba(15,23,42,0.10)]'>

@@ -5,7 +5,7 @@ const ChatWelcome = () => {
    <section className='text-center'>
 <h1 className='text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl'>
 Welcome to{" "}
-        <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+        <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent  tracking-wide">
           Universe
         </span>
 </h1>
