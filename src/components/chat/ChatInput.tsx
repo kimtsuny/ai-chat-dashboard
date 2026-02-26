@@ -22,7 +22,14 @@ setText("")
 <div className="flex items-start gap-2 sm:gap-3">
           <Textarea
             value={text}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // يمنع سطر جديد
+                handleSubmit(e);    // يرسل الرسالة
+              }
+            }}
             onChange={(e) => setText(e.target.value)}
+            onSubmit={handleSubmit}
             placeholder="Ask about shit..."
             className="min-h-[72px] 
     min-w-0 

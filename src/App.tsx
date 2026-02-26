@@ -1,16 +1,14 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route } from 'react-router-dom'
 import './App.css'
-import {Layout} from '@/components/layout/Layout'
-function App() {
-  
+import { Layout } from '@/components/layout/Layout'
+import Login from '@/pages/Login'
 
+function App() {
   return (
-    <>
-    <Layout/>
-     
-    </>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/*" element={<Layout />} />
+    </Routes>
   )
 }
 

@@ -15,9 +15,9 @@ interface SidebarProps {
 
 function SidebarBody() {
   return (
-    <div className="flex h-full flex-col gap-4 py-4">
+    <div className="flex h-full flex-col gap-3 py-4">
       <SidebarHeader />
-      <div className="px-2">
+      <div className="px-10">
         <NewChatButton />
       </div>
       <div className="px-2">

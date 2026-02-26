@@ -1,7 +1,9 @@
 import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-import {
+import{
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -21,6 +23,8 @@ interface TopbarProps {
 }
 
 export function Topbar({ onMenuClick }: TopbarProps) {
+  const navigate = useNavigate();
+  const { user, setUser } = useAuth()
   return (
     <header className="flex items-center justify-between h-14 px-2 pt-3 bg-muted/40">
       {/* Left side */}
@@ -31,52 +35,69 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
         <h1 className="font-semibold text-lg md:hidden">Universe</h1>
       </div>
+{/* User dropdown */}
+<div className="md:mt-[5px] md:mr-2">
+{user ? (<DropdownMenu >
+    <DropdownMenuTrigger asChild>
+      <button className="flex items-center gap-4 rounded-full hover:bg-accent px-2 py-1 transition">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback>U</AvatarFallback>
+        </Avatar>
+        <ChevronDown className="w-4 h-4 opacity-60" />
+      </button>
+    </DropdownMenuTrigger>
 
-      {/* User dropdown */}
-      <div className="md:mt-4 md:mr-2">
-        <DropdownMenu >
-        <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-4 rounded-full hover:bg-accent px-2 py-1 transition">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
+    <DropdownMenuContent align="end" className="w-52">
+    <DropdownMenuLabel>
+  <div className="flex flex-col">
+    <span className="text-sm font-medium">
+      {user?.email.split("@")[0]}
+    </span>
+    <span className="text-xs text-muted-foreground">
+      {user?.email}
+    </span>
+  </div>
+</DropdownMenuLabel>
 
-            <ChevronDown className="w-4 h-4 opacity-60" />
-          </button>
-        </DropdownMenuTrigger>
+      <DropdownMenuSeparator />
 
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuLabel>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Username</span>
-              <span className="text-xs text-muted-foreground">
-                user@email.com
-              </span>
-            </div>
-          </DropdownMenuLabel>
+      <DropdownMenuItem>
+        <User className="mr-2 h-4 w-4" />
+        Profile
+      </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
+      <DropdownMenuItem>
+        <Settings className="mr-2 h-4 w-4" />
+        Settings
+      </DropdownMenuItem>
 
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
+      <DropdownMenuSeparator />
 
-          <DropdownMenuItem>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
+      <DropdownMenuItem className="text-red-500"   onClick={() => {
+    setUser(null)
+    navigate("/login")
+  }}>
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>) : (
+    <button
+  onClick={() => navigate("/login")}
+  className="rounded-xl px-4 h-10 text-sm font-medium text-white
+             bg-gradient-to-r from-violet-600 to-indigo-600 
+             hover:from-violet-500 hover:to-indigo-500
+             transition-all"
+>
+  Sign Up
+</button>
+  )}
+  
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem className="text-red-500">
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      </div>
+ 
+  
+</div>
     </header>
   );
 }
