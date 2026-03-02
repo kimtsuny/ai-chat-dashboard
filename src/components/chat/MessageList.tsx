@@ -1,8 +1,21 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRef, useEffect } from "react";
 
 const MessageList = ({ messages }: any) => {
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!messages.length) return;
+  
+    const lastMessage = messages[messages.length - 1];
+  
+    
+    if (lastMessage.role === "user") {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  
+  }, [messages]);
   return (
     <div className="flex w-full flex-col flex-1 overflow-y-auto min-h-0">
 
@@ -64,6 +77,7 @@ const MessageList = ({ messages }: any) => {
             </div>
           );
         })}
+        <div ref={bottomRef}/>
 
       </div>
 

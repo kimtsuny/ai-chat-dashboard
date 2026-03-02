@@ -12,6 +12,7 @@ type ChatContextType = {
   fetchConversations: () => void
   currentConversationId: string | null
   setCurrentConversationId: (id: string | null) => void
+  deleteConversation: (id: string) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -42,8 +43,36 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     fetchConversations()
   }, [user])
 
+  const deleteConversation = async (id: string) => {
+    try {
+     
+      const { error } = await supabase
+        .from("conversations")
+        .delete()
+        .eq("id", id)
+  
+      if (error) {
+        console.error("Delete error:", error)
+        return
+      }
+  
+     
+      setConversations((prev) =>
+        prev.filter((conv) => conv.id !== id)
+      )
+  
+      
+      if (currentConversationId === id) {
+        setCurrentConversationId(null)
+      }
+  
+    } catch (err) {
+      console.error("Unexpected error:", err)
+    }
+  }
+
   return (
-    <ChatContext.Provider value={{ conversations, fetchConversations, currentConversationId, setCurrentConversationId }}>
+    <ChatContext.Provider value={{ conversations, fetchConversations, currentConversationId, setCurrentConversationId, deleteConversation }}>
       {children}
     </ChatContext.Provider>
   )

@@ -34,20 +34,42 @@ serve(async (req) => {
         }),
       }
     );
+    
+    console.log("STATUS:", response.status);
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.log("RAW ERROR:", errorText);
+    
+      return new Response(
+        JSON.stringify({ reply: "API Error", error: errorText }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+    
     const data = await response.json();
-    console.log("NVIDIA:", data);
+    console.log("FULL RESPONSE:", data);
 
     const reply =
-      data?.choices?.[0]?.message?.content ||
-      "No response from model";
+    data.choices?.[0]?.message?.content ||
+    data.choices?.[0]?.text ||
+    JSON.stringify(data)
 
-    return new Response(JSON.stringify({ reply }), {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-      },
-    });
+    return new Response(
+      JSON.stringify({ reply }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
   } catch (err) {
     return new Response(
       JSON.stringify({ reply: "Server error", error: String(err) }),
