@@ -3,7 +3,7 @@ import { Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import logo from "@/assets/logo.png"
-import { login } from "@/services/supabase"
+import { login } from "@/features/auth/services/supabase"
 import { useAuth } from "@/context/AuthContext"
 import { useNavigate } from "react-router-dom"
 function GoogleIcon({ className }: { className?: string }) {

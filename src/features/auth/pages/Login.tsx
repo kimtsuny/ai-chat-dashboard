@@ -1,5 +1,5 @@
 
-import { AuthCard } from "@/components/auth/AuthCard"
+import { AuthCard } from "@/features/auth/components/AuthCard"
 
 export default function Login() {
   return (

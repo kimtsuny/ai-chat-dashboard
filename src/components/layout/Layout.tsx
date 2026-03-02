@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Topbar } from "./Topbar"
 import { Sidebar } from "./Sidebar/Sidebar"
-import Chat from "@/pages/Chat"
+import Chat from "@/features/chat/pages/Chat"
 
 export function Layout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)

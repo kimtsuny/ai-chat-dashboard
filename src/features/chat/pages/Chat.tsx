@@ -1,8 +1,8 @@
-import ChatCards from '@/components/chat/ChatCards'
-import ChatInput from '@/components/chat/ChatInput'
-import ChatWelcome from '@/components/chat/ChatWelcome'
-import MessageList from '@/components/chat/MessageList'
-import ChatSkeleton from '@/components/chat/ChatSkeleton'
+import ChatCards from '@/features/chat/compoents/ChatCards'
+import ChatInput from '../compoents/ChatInput'
+import ChatWelcome from '@/features/chat/compoents/ChatWelcome'
+import MessageList from '@/features/chat/compoents/MessageList'
+import ChatSkeleton from '@/features/chat/compoents/ChatSkeleton'
 
 import { useChat } from '@/context/ChatContext'
 import { supabase } from '@/lib/supabase'
