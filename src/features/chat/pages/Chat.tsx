@@ -47,12 +47,65 @@ const Chat = () => {
     fetchMessages()
   }, [currentConversationId])
 
-  async function handleSend(text: string) {
-    if (!user) return
+ async function handleSend(text: string) {
+
+  // 🟢 1. user message (للـ UI فقط)
+  const userMsg = {
+    id: Date.now().toString(),
+    content: text,
+    role: "user",
+  }
+
+  setMessages((prev) => [...prev, userMsg])
+
+  // 🔵 2. loading message
+  const tempAiMsg = {
+    id: "loading-" + Date.now(),
+    content: "",
+    role: "ai",
+    isTyping: true
+  }
+
+  setMessages((prev) => [...prev, tempAiMsg])
+
+  // 🧠 3. call AI (دائماً)
+  const res = await fetch(
+    "https://eodtylujqrywxflylqin.supabase.co/functions/v1/chat",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: text }),
+    }
+  )
+
+  const data = await res.json()
+  const reply = data.reply
+  console.log(data)
+
+  // 🔁 4. replace loading with real reply
+  setMessages((prev) => {
+    const updated = [...prev]
+    const index = updated.findIndex(msg => msg.id === tempAiMsg.id)
+
+    if (index !== -1) {
+      updated[index] = {
+        id: Date.now().toString(),
+        content: reply,
+        role: "ai",
+        isTyping: false
+      }
+    }
+
+    return updated
+  })
+
   
+  if (user) {
     let conversationId = currentConversationId
-  
-    // 🧠 create conversation
+
+    // 🧠 create conversation (فقط إذا user)
     if (!conversationId) {
       const { data, error } = await supabase
         .from("conversations")
@@ -64,22 +117,14 @@ const Chat = () => {
         ])
         .select()
         .single()
-  
+
       if (error) return
-  
+
       conversationId = data.id
       setCurrentConversationId(conversationId)
     }
-  
-    // 🟢 user message
-    const userMsg = {
-      id: Date.now().toString(),
-      content: text,
-      role: "user",
-    }
-  
-    setMessages((prev) => [...prev, userMsg])
-  
+
+    // 💾 save user message
     await supabase.from("messages").insert([
       {
         content: text,
@@ -87,50 +132,8 @@ const Chat = () => {
         conversation_id: conversationId,
       },
     ])
-  
-    // 🔵 loading message
-    const tempAiMsg = {
-      id: "loading-" + Date.now(),
-      content: "",
-      role: "ai",
-      isTyping: true
-    }
-  
-    setMessages((prev) => [...prev, tempAiMsg])
-  
-   
-    const res = await fetch(
-      "https://eodtylujqrywxflylqin.supabase.co/functions/v1/chat",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: text }),
-      }
-    )
-  
-    const data = await res.json()
-    const reply = data.reply
-  
-    // 🔁 replace loading message
-    setMessages((prev) => {
-      const updated = [...prev]
-      const index = updated.findIndex(msg => msg.id === tempAiMsg.id)
-  
-      if (index !== -1) {
-        updated[index] = {
-          id: Date.now().toString(),
-          content: reply,
-          role: "ai",
-          isTyping: false
-        }
-      }
-  
-      return updated
-    })
-  
-    // 💾 save AI message
+
+    // 💾 save AI reply
     await supabase.from("messages").insert([
       {
         content: reply,
@@ -139,6 +142,7 @@ const Chat = () => {
       },
     ])
   }
+}
 
   return (
     <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-muted/40 via-background to-background">

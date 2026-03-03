@@ -1,4 +1,5 @@
-import { createContext, useState, ReactNode, useContext } from "react"
+import { supabase } from "@/lib/supabase"
+import { createContext, useState, ReactNode, useContext, useEffect } from "react"
 
 type User = {
   id: string
@@ -28,6 +29,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("user")
     }
   }
+
+  useEffect(() => {
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+        })
+      } else {
+        setUser(null)
+      }
+    }
+  )
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
+}, [])  
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>

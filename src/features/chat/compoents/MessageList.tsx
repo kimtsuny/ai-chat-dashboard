@@ -7,14 +7,10 @@ const MessageList = ({ messages }: any) => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!messages.length) return;
-  
     const lastMessage = messages[messages.length - 1];
-  
-    
-    if (lastMessage.role === "user") {
+    if (lastMessage.role === "user" || lastMessage.isTyping) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  
   }, [messages]);
   return (
     <div className="flex w-full flex-col flex-1 overflow-y-auto min-h-0">
@@ -34,19 +30,19 @@ const MessageList = ({ messages }: any) => {
                   "transition-all duration-200",
 
                   msg.isTyping
-                  ? ""
-                  : "px-4 py-3 rounded-2xl bg-gray-100 text-black",
+                    ? ""
+                    : "px-4 py-3 rounded-2xl bg-gray-100 text-black",
 
                   isUser
                     ? "bg-black text-white ml-auto"
                     : " text-black"
                 )}
               >
-               {msg.isTyping ? (
-  <div className="flex items-center">
-    <span className="typing-dot" />
-    <style>
-{`
+                {msg.isTyping ? (
+                  <div className="flex items-center">
+                    <span className="typing-dot" />
+                    <style>
+                      {`
   .typing-dot {
     width: 10px;
     height: 10px;
@@ -67,17 +63,17 @@ const MessageList = ({ messages }: any) => {
     }
   }
 `}
-</style>
-  </div>
-) : (
-  <span>{msg.content}</span>
-)}
+                    </style>
+                  </div>
+                ) : (
+                  <span>{msg.content}</span>
+                )}
               </div>
 
             </div>
           );
         })}
-        <div ref={bottomRef}/>
+        <div ref={bottomRef} />
 
       </div>
 

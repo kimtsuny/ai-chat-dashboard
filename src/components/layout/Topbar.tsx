@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { logout } from "@/features/auth/services/supabase";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -74,10 +75,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
       <DropdownMenuSeparator />
 
-      <DropdownMenuItem className="text-red-500"   onClick={() => {
-    setUser(null)
-    navigate("/login")
-  }}>
+      <DropdownMenuItem className="text-red-500" onClick={async () => {
+  await logout()       // 🔥 أهم سطر
+  setUser(null)
+  navigate("/login")
+}}>
         <LogOut className="mr-2 h-4 w-4" />
         Logout
       </DropdownMenuItem>

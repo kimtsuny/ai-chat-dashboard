@@ -12,3 +12,13 @@ export async function login(email: string, password: string) {
 
   return { user: data.user, error: null }
 }
+
+export async function loginWithGoogle() {
+  await supabase.auth.signInWithOAuth({
+    provider: "google",
+  })
+}
+
+export async function logout() {
+  await supabase.auth.signOut()
+}
