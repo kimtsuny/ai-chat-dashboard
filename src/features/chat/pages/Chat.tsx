@@ -8,20 +8,33 @@ import { useChat } from '@/context/ChatContext'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const Chat = () => {
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const isSendingRef = useRef(false)
 
   const { user } = useAuth()
-  const { currentConversationId, setCurrentConversationId } = useChat()
+  const { currentConversationId, setCurrentConversationId, fetchConversations } = useChat()
 
-  // 🔥 fetch messages
+  // Reset chat state when user changes (login/logout)
+  useEffect(() => {
+    setCurrentConversationId(null)
+    setMessages([])
+  }, [user])
+
+  useEffect(() => {
+    if (currentConversationId) {
+      setLoading(true)
+    }
+  }, [currentConversationId])
+
+  // 🔥 fetch messages — guarded by isSendingRef to avoid overwriting mid-send
   useEffect(() => {
     async function fetchMessages() {
+      if (isSendingRef.current) return
       if (!currentConversationId) {
-        setMessages([])
         setLoading(false)
         return
       }
@@ -47,102 +60,112 @@ const Chat = () => {
     fetchMessages()
   }, [currentConversationId])
 
- async function handleSend(text: string) {
+  async function handleSend(text: string) {
+    isSendingRef.current = true
 
-  // 🟢 1. user message (للـ UI فقط)
-  const userMsg = {
-    id: Date.now().toString(),
-    content: text,
-    role: "user",
-  }
-
-  setMessages((prev) => [...prev, userMsg])
-
-  // 🔵 2. loading message
-  const tempAiMsg = {
-    id: "loading-" + Date.now(),
-    content: "",
-    role: "ai",
-    isTyping: true
-  }
-
-  setMessages((prev) => [...prev, tempAiMsg])
-
-  // 🧠 3. call AI (دائماً)
-  const res = await fetch(
-    "https://eodtylujqrywxflylqin.supabase.co/functions/v1/chat",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message: text }),
+    // 🟢 1. user message (UI only)
+    const userMsg = {
+      id: Date.now().toString(),
+      content: text,
+      role: "user",
     }
-  )
 
-  const data = await res.json()
-  const reply = data.reply
-  console.log(data)
+    // 🔵 2. loading message
+    const tempAiMsg = {
+      id: "loading-" + Date.now(),
+      content: "",
+      role: "ai",
+      isTyping: true
+    }
 
-  // 🔁 4. replace loading with real reply
-  setMessages((prev) => {
-    const updated = [...prev]
-    const index = updated.findIndex(msg => msg.id === tempAiMsg.id)
+    setMessages((prev) => [...prev, userMsg, tempAiMsg])
 
-    if (index !== -1) {
-      updated[index] = {
-        id: Date.now().toString(),
-        content: reply,
-        role: "ai",
-        isTyping: false
+    // 🧠 3. call AI
+    const res = await fetch(
+      "https://eodtylujqrywxflylqin.supabase.co/functions/v1/chat",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: text }),
       }
+    )
+
+    const data = await res.json()
+    const reply = data.reply
+
+    // 🔁 4. replace loading with real reply
+    setMessages((prev) => {
+      const updated = [...prev]
+      const index = updated.findIndex(msg => msg.id === tempAiMsg.id)
+
+      if (index !== -1) {
+        updated[index] = {
+          id: Date.now().toString(),
+          content: reply,
+          role: "ai",
+          isTyping: false
+        }
+      }
+
+      return updated
+    })
+
+    // 💾 5. persist to DB (if logged in) — ALL inserts BEFORE setCurrentConversationId
+    if (user) {
+      let conversationId = currentConversationId
+
+      // Create conversation if needed
+      if (!conversationId) {
+        const { data, error } = await supabase
+          .from("conversations")
+          .insert([
+            {
+              title: text.slice(0, 20),
+              user_id: user.id,
+            },
+          ])
+          .select()
+          .single()
+
+        if (error) {
+          isSendingRef.current = false
+          return
+        }
+
+        conversationId = data.id
+      }
+
+      // Save user message
+      await supabase.from("messages").insert([
+        {
+          content: text,
+          role: "user",
+          conversation_id: conversationId,
+        },
+      ])
+
+      // Save AI reply
+      await supabase.from("messages").insert([
+        {
+          content: reply,
+          role: "ai",
+          conversation_id: conversationId,
+        },
+      ])
+
+      // ✅ 6. NOW safe to set conversation ID — data is already in DB
+      isSendingRef.current = false
+
+      if (!currentConversationId) {
+        setCurrentConversationId(conversationId)
+        fetchConversations()
+      }
+    } else {
+      isSendingRef.current = false
     }
-
-    return updated
-  })
-
-  
-  if (user) {
-    let conversationId = currentConversationId
-
-    // 🧠 create conversation (فقط إذا user)
-    if (!conversationId) {
-      const { data, error } = await supabase
-        .from("conversations")
-        .insert([
-          {
-            title: text.slice(0, 20),
-            user_id: user.id,
-          },
-        ])
-        .select()
-        .single()
-
-      if (error) return
-
-      conversationId = data.id
-      setCurrentConversationId(conversationId)
-    }
-
-    // 💾 save user message
-    await supabase.from("messages").insert([
-      {
-        content: text,
-        role: "user",
-        conversation_id: conversationId,
-      },
-    ])
-
-    // 💾 save AI reply
-    await supabase.from("messages").insert([
-      {
-        content: reply,
-        role: "ai",
-        conversation_id: conversationId,
-      },
-    ])
   }
-}
 
   return (
     <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-muted/40 via-background to-background">
@@ -158,7 +181,11 @@ const Chat = () => {
       ) : (
         <>
           <div className="flex-1 w-full overflow-y-auto min-h-0">
-            {loading ? <ChatSkeleton /> : <MessageList messages={messages} />}
+            {loading ? (
+              <ChatSkeleton />
+            ) : (
+              <MessageList messages={messages} />
+            )}
           </div>
 
           <div className="shrink-0 mx-auto w-full max-w-5xl">

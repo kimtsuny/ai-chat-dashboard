@@ -2,7 +2,7 @@ import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-
+import { useChat } from "@/context/ChatContext"
 import{
   Avatar,
   AvatarFallback,
@@ -26,6 +26,8 @@ interface TopbarProps {
 export function Topbar({ onMenuClick }: TopbarProps) {
   const navigate = useNavigate();
   const { user, setUser } = useAuth()
+ const { setCurrentConversationId } = useChat()
+
   return (
     <header className="flex items-center justify-between h-14 px-2 pt-3 bg-muted/40">
       {/* Left side */}
@@ -76,8 +78,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       <DropdownMenuSeparator />
 
       <DropdownMenuItem className="text-red-500" onClick={async () => {
-  await logout()       // 🔥 أهم سطر
+  await logout()       
   setUser(null)
+setCurrentConversationId(null)
   navigate("/login")
 }}>
         <LogOut className="mr-2 h-4 w-4" />
