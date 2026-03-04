@@ -12,7 +12,7 @@ export function NewChatButton() {
 
   return (
     <Button
-      className="w-full flex justify-center items-center gap-2 rounded-full bg-neutral-900 text-white font-semibold hover:bg-neutral-800 border-none shadow-sm h-10"
+      className="w-full flex justify-center items-center gap-2 rounded-full bg-gradient-to-r from-[#8b5cf6] to-purple-500 text-white font-semibold hover:from-[#7c3aed] hover:to-purple-600 border-none shadow-lg shadow-purple-500/20 h-10 transition-all duration-200"
       onClick={async () => {
         if (!user) return
 
@@ -24,12 +24,12 @@ export function NewChatButton() {
               title: "New Chat",
             },
           ])
-          .select() 
+          .select()
 
         if (!error && data) {
           const newConversation = data[0]
 
-        
+
           setCurrentConversationId(newConversation.id)
 
           await fetchConversations()

@@ -31,11 +31,9 @@ const MessageList = ({ messages }: any) => {
 
                   msg.isTyping
                     ? ""
-                    : "px-4 py-3 rounded-2xl bg-gray-100 text-black",
-
-                  isUser
-                    ? "bg-black text-white ml-auto"
-                    : " text-black"
+                    : isUser
+                      ? "bg-[#8b5cf6] text-white ml-auto"
+                      : "bg-[#1e1e24] text-[#f3f4f6] border border-[#2e2e36]"
                 )}
               >
                 {msg.isTyping ? (

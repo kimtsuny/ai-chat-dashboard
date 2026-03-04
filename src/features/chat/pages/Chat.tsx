@@ -168,7 +168,7 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-muted/40 via-background to-background">
+    <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-[#121217] via-[#0f0f11] to-[#0f0f11]">
 
       {messages.length === 0 ? (
         <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-5xl">

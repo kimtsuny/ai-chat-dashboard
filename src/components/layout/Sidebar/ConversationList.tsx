@@ -47,7 +47,7 @@ export function ConversationList() {
   return (
     <div className="flex flex-1 flex-col min-h-0">
       <ScrollArea className="flex-1">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
 
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
@@ -55,8 +55,8 @@ export function ConversationList() {
                 key={i}
                 className="flex items-center gap-3 px-3 py-2"
               >
-                <Skeleton className="h-4 w-4 rounded-full" />
-                <Skeleton className="h-4 w-[70%]" />
+                <Skeleton className="h-4 w-4 rounded-full bg-[#1e1e24]" />
+                <Skeleton className="h-4 w-[70%] bg-[#1e1e24]" />
               </div>
             ))
           ) : (
@@ -67,26 +67,29 @@ export function ConversationList() {
                 <div
                   key={conv.id}
                   className={cn(
-                    "group flex items-center w-full rounded-xl px-2",
+                    "group flex items-center w-full rounded-lg px-2",
                     "transition-all duration-200",
-                    !isActive && "hover:bg-black/10",
-                    isActive && "bg-black text-white"
+                    !isActive && "hover:bg-[#1e1e24]/60",
+                    isActive && "bg-[#1e1e24] text-[#f3f4f6]"
                   )}
                 >
-                  {/* 🔥 زر المحادثة */}
+                  {/* Conversation button */}
                   <button
                     onClick={() => setCurrentConversationId(conv.id)}
-                    className="flex flex-1 items-center gap-3 py-2 min-w-0 text-left text-sm font-semibold"
+                    className="flex flex-1 items-center gap-3 py-2 min-w-0 text-left text-sm font-medium"
                   >
                     <MessageCircleDashed
                       className={cn(
                         "h-4 w-4 shrink-0",
-                        isActive ? "text-white" : "text-black"
+                        isActive ? "text-[#8b5cf6]" : "text-[#9ca3af]"
                       )}
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate leading-snug">
+                      <p className={cn(
+                        "truncate leading-snug",
+                        isActive ? "text-[#f3f4f6]" : "text-[#9ca3af]"
+                      )}>
                         {conv.title}
                       </p>
                     </div>
@@ -96,51 +99,51 @@ export function ConversationList() {
                     <DropdownMenuTrigger asChild>
                       <button
                         className={cn(
-                          "p-2 rounded-xl",
+                          "p-2 rounded-lg text-[#9ca3af] hover:text-[#f3f4f6]",
                           " md:opacity-0 group-hover:opacity-100",
-
+                          "transition-all duration-200"
                         )}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent align="end" className="w-12">
+                    <DropdownMenuContent align="end" className="w-12 bg-[#1e1e24] border-[#2e2e36]">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             className={cn(
                               "flex items-center gap-2 cursor-pointer",
-                              "text-red-500",
-                              "focus:bg-transparent focus:text-red-500",
-                              "hover:text-red-500"
+                              "text-red-400",
+                              "focus:bg-[#24242b] focus:text-red-400",
+                              "hover:text-red-400"
                             )}
-                            onSelect={(e) => e.preventDefault()} // 🔥 مهم
+                            onSelect={(e) => e.preventDefault()}
                           >
                             <Trash2 className="h-4 w-4" />
                             <span>Delete</span>
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
 
-                        <AlertDialogContent className="bg-black text-white border-none shadow-2xl">
+                        <AlertDialogContent className="bg-[#1e1e24] text-[#f3f4f6] border-[#2e2e36] shadow-2xl">
                           <AlertDialogHeader>
-                            <AlertDialogTitle>
+                            <AlertDialogTitle className="text-[#f3f4f6]">
                               Delete this conversation?
                             </AlertDialogTitle>
 
-                            <AlertDialogDescription>
+                            <AlertDialogDescription className="text-[#9ca3af]">
                               This will permanently delete this chat and its messages.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
 
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-white text-black hover:bg-gray-200">
+                            <AlertDialogCancel className="bg-[#24242b] text-[#f3f4f6] border-[#2e2e36] hover:bg-[#2e2e36] hover:text-[#f3f4f6]">
                               Cancel
                             </AlertDialogCancel>
 
                             <AlertDialogAction
                               onClick={() => deleteConversation(conv.id)}
-                              className="bg-red-500 hover:bg-red-600"
+                              className="bg-red-500/90 hover:bg-red-600 text-white"
                             >
                               Delete
                             </AlertDialogAction>

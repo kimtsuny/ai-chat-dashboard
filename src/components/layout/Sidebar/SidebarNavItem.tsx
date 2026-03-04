@@ -14,10 +14,11 @@ export function SidebarNavItem({ icon: Icon, label, to }: SidebarNavItemProps) {
       to={to}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 px-3 py-2 rounded-xl",
+          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm",
+          "transition-all duration-200",
           isActive
-            ? "bg-black text-accent-foreground text-white font-semibold transition-colors"
-            : "text-black-foreground font-semibold transition-colors"
+            ? "bg-[#1e1e24] text-[#f3f4f6] font-semibold border-l-2 border-[#8b5cf6]"
+            : "text-[#9ca3af] font-medium hover:bg-[#1e1e24] hover:text-[#f3f4f6]"
         )
       }
     >

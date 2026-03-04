@@ -7,31 +7,31 @@ export function Layout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [desktopOpen, setDesktopOpen] = useState(true)
 
-function handleSidebarOpen() {
-  if (window.innerWidth >= 768){
-    setDesktopOpen(!desktopOpen)
-  }else{
-    setMobileSidebarOpen(!mobileSidebarOpen)
+  function handleSidebarOpen() {
+    if (window.innerWidth >= 768) {
+      setDesktopOpen(!desktopOpen)
+    } else {
+      setMobileSidebarOpen(!mobileSidebarOpen)
+    }
   }
-}
 
   return (
-<div className="flex h-screen overflow-hidden">
-  <Sidebar
+<div className="flex h-[100dvh] overflow-hidden bg-[#0f0f11]">
+        <Sidebar
         open={mobileSidebarOpen}
         onOpenChange={setMobileSidebarOpen}
         desktopOpen={desktopOpen}
         setDesktopOpen={setDesktopOpen}
       />
 
-    <div className="flex flex-1 flex-col ">
-      <Topbar onMenuClick={handleSidebarOpen} />
+      <div className="flex flex-1 flex-col ">
+        <Topbar onMenuClick={handleSidebarOpen} />
 
-<main className="flex flex-1 flex-col min-h-0">
-  <Chat/>
-</main>
-      
-    </div>
+        <main className="flex flex-1 flex-col min-h-0">
+          <Chat />
+        </main>
+
+      </div>
     </div>
   )
 }

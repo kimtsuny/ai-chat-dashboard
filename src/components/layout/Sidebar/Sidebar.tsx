@@ -23,7 +23,7 @@ function SidebarBody() {
       <div className="px-2">
         <SidebarNav />
       </div>
-      <Separator />
+      <Separator className="bg-[#2e2e36]" />
       <ConversationList />
       <SidebarFooter />
     </div>
@@ -36,7 +36,7 @@ export function Sidebar({ open, onOpenChange, desktopOpen }: SidebarProps) {
       {/* Mobile: slide-over sheet */}
       <div className="md:hidden">
         <Sheet open={open} onOpenChange={onOpenChange}>
-          <SheetContent side="left" className="w-[260px] p-0 px-2">
+          <SheetContent side="left" className="w-[260px] p-0 px-2 bg-[#0f0f11] border-[#2e2e36]">
             <SidebarBody />
           </SheetContent>
         </Sheet>
@@ -45,8 +45,8 @@ export function Sidebar({ open, onOpenChange, desktopOpen }: SidebarProps) {
       {/* Desktop: collapsible aside */}
       <aside
         className={`
-          hidden md:flex flex-col border-r bg-background
-          transition-all duration-200 overflow-hidden
+          hidden md:flex flex-col border-r border-[#2e2e36] bg-[#0f0f11]
+          transition-all duration-300 overflow-hidden
           ${desktopOpen ? "w-[260px] px-2" : "w-0 px-0"}
         `}
       >
