@@ -15,7 +15,7 @@ const ChatInput = ({ onSend }) => {
     setText("")
   }
   return (
-    <form className='mx-auto max-w-3xl w-full p-3 md:p-1 mb-7'
+    <form className='mx-auto max-w-3xl w-full p-3 md:p-1 sm:mb-2'
       onSubmit={handleSubmit}
     >
       <div className='rounded-2xl p-3 bg-[#1e1e24] border border-[#2e2e36] transition-all duration-300 focus-within:border-[#8b5cf6]/50 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.15)]'>

@@ -29,7 +29,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { setCurrentConversationId } = useChat()
 
   return (
-    <header className="flex items-center justify-between h-14 px-2 pt-3 pb-2 bg-[#0f0f11] border-b border-[#2e2e36]/50">
+    <header className="flex items-center justify-between h-14 px-2 pt-3 pb-2">
       {/* Left side */}
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" onClick={onMenuClick} className="text-[#9ca3af] hover:text-[#f3f4f6] hover:bg-[#1e1e24] transition-colors">
