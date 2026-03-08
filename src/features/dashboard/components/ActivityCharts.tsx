@@ -36,7 +36,7 @@ const chartTooltipStyle = {
     fontSize: "12px",
 }
 
-export default function ActivityCharts() {
+export default function ActivityCharts( {messagesActivity}: {messagesActivity: any}) {
     return (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Messages Activity */}
@@ -49,7 +49,7 @@ export default function ActivityCharts() {
                 <CardContent>
                     <div className="h-[240px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={messagesData}>
+                            <AreaChart data={messagesActivity}>
                                 <defs>
                                     <linearGradient id="msgFill" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -80,6 +80,7 @@ export default function ActivityCharts() {
                                     stroke="#8b5cf6"
                                     strokeWidth={2}
                                     fill="url(#msgFill)"
+                                    dot={false}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -91,7 +92,7 @@ export default function ActivityCharts() {
             <Card className="border-[#2e2e36]/60 bg-[#1e1e24]">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-[#9ca3af]">
-                        Login Activity
+                        Conversations Activity
                     </CardTitle>
                 </CardHeader>
                 <CardContent>

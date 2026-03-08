@@ -3,7 +3,8 @@ import { createContext, useState, ReactNode, useContext, useEffect } from "react
 
 type User = {
   id: string
-  email: string
+  email: string,
+  role: string
 } | null
 
 type AuthContextType = {
@@ -30,14 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  useEffect(() => {
+ useEffect(() => {
   const { data: listener } = supabase.auth.onAuthStateChange(
-    (event, session) => {
+    async (event, session) => {
+
       if (session?.user) {
+
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+
         setUser({
           id: session.user.id,
           email: session.user.email!,
+          role: data?.role ?? "user",
         })
+
       } else {
         setUser(null)
       }
@@ -47,7 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return () => {
     listener.subscription.unsubscribe()
   }
-}, [])  
+
+}, [])
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
