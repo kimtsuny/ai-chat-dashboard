@@ -4,7 +4,10 @@ import { createContext, useState, ReactNode, useContext, useEffect } from "react
 type User = {
   id: string
   email: string,
-  role: string
+  role: string,
+  avatar_url: string | null
+  cover_url: string | null
+  created_at: string | null
 } | null
 
 type AuthContextType = {
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { data } = await supabase
           .from("profiles")
-          .select("role")
+          .select("role, avatar_url, cover_url, created_at")
           .eq("id", session.user.id)
           .single()
 
@@ -47,6 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: session.user.id,
           email: session.user.email!,
           role: data?.role ?? "user",
+          avatar_url: data?.avatar_url ?? null,
+          cover_url: data?.cover_url ?? null,
+          created_at: data?.created_at ?? null,
         })
 
       } else {

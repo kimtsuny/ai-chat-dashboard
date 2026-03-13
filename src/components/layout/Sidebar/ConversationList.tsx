@@ -24,13 +24,14 @@ import { useChat } from "@/context/ChatContext"
 import { useEffect, useState } from "react"
 
 export function ConversationList() {
-  const {
-    conversations,
-    fetchConversations,
-    currentConversationId,
-    setCurrentConversationId,
-    deleteConversation
-  } = useChat()
+ const {
+  conversations,
+  searchQuery,
+  fetchConversations,
+  currentConversationId,
+  setCurrentConversationId,
+  deleteConversation
+} = useChat()
 
   const [loading, setLoading] = useState(true)
 
@@ -43,6 +44,10 @@ export function ConversationList() {
 
     load()
   }, [])
+
+  const filteredConversations = conversations.filter((conv) =>
+  conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+)
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
@@ -60,7 +65,7 @@ export function ConversationList() {
               </div>
             ))
           ) : (
-            conversations.map((conv) => {
+            filteredConversations.map((conv) => {
               const isActive = currentConversationId === conv.id
 
               return (

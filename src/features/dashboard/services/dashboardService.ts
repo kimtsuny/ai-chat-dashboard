@@ -93,3 +93,15 @@ export async function getMessagesActivity(userId: string, role: string) {
     messages: result[day]
   }))
 }
+
+export async function getUserStats(userId: string, role: string) {
+
+  const messagesCount = await getMessagesCount(userId, role)
+  const conversationsCount = await getConversationsCount(userId, role)
+
+  return {
+    messages: messagesCount,
+    conversations: conversationsCount
+  }
+
+}

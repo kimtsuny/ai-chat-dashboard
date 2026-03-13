@@ -13,6 +13,8 @@ type ChatContextType = {
   currentConversationId: string | null
   setCurrentConversationId: (id: string | null) => void
   deleteConversation: (id: string) => void
+  searchQuery: string
+  setSearchQuery: (query: string) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -20,6 +22,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
 
   const fetchConversations = async () => {
@@ -72,7 +75,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ChatContext.Provider value={{ conversations, fetchConversations, currentConversationId, setCurrentConversationId, deleteConversation }}>
+    <ChatContext.Provider value={{ conversations, searchQuery, setSearchQuery, fetchConversations, currentConversationId, setCurrentConversationId, deleteConversation }}>
       {children}
     </ChatContext.Provider>
   )

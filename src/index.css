@@ -87,3 +87,33 @@
     background: #3e3e46;
   }
 }
+/* Strong fix for Recharts focus outline */
+
+.recharts-wrapper,
+.recharts-surface,
+.recharts-wrapper svg,
+.recharts-surface svg {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-wrapper svg:focus,
+.recharts-surface svg:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus-visible,
+.recharts-wrapper svg:focus-visible,
+.recharts-surface svg:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* remove tap highlight on mobile */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-wrapper svg {
+  -webkit-tap-highlight-color: transparent;
+}

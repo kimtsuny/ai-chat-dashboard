@@ -36,11 +36,11 @@ const chartTooltipStyle = {
     fontSize: "12px",
 }
 
-export default function ActivityCharts( {messagesActivity}: {messagesActivity: any}) {
+export default function ActivityCharts({ messagesActivity }: { messagesActivity: any }) {
     return (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1">
             {/* Messages Activity */}
-            <Card className="border-[#2e2e36]/60 bg-[#1e1e24]">
+            <Card className="border-[#2e2e36]/60 bg-[#1e1e24] ">
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium text-[#9ca3af]">
                         Messages Activity
@@ -49,7 +49,11 @@ export default function ActivityCharts( {messagesActivity}: {messagesActivity: a
                 <CardContent>
                     <div className="h-[240px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={messagesActivity}>
+                            <AreaChart
+                                data={messagesActivity}
+                                tabIndex={-1}
+                                style={{ outline: "none" }}
+                            >
                                 <defs>
                                     <linearGradient id="msgFill" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -73,7 +77,11 @@ export default function ActivityCharts( {messagesActivity}: {messagesActivity: a
                                     tick={{ fill: "#9ca3af", fontSize: 12 }}
                                     width={30}
                                 />
-                                <Tooltip contentStyle={chartTooltipStyle} />
+                                <Tooltip
+                                    contentStyle={chartTooltipStyle}
+                                    cursor={false}
+                                    trigger="hover"
+                                />
                                 <Area
                                     type="monotone"
                                     dataKey="messages"
@@ -88,52 +96,6 @@ export default function ActivityCharts( {messagesActivity}: {messagesActivity: a
                 </CardContent>
             </Card>
 
-            {/* Login Activity */}
-            <Card className="border-[#2e2e36]/60 bg-[#1e1e24]">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-[#9ca3af]">
-                        Conversations Activity
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-[240px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={loginsData}>
-                                <defs>
-                                    <linearGradient id="loginFill" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.8} />
-                                        <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.6} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#2e2e36"
-                                    vertical={false}
-                                />
-                                <XAxis
-                                    dataKey="week"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: "#9ca3af", fontSize: 12 }}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fill: "#9ca3af", fontSize: 12 }}
-                                    width={30}
-                                />
-                                <Tooltip contentStyle={chartTooltipStyle} />
-                                <Bar
-                                    dataKey="logins"
-                                    fill="url(#loginFill)"
-                                    radius={[6, 6, 0, 0]}
-                                    maxBarSize={40}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     )
 }

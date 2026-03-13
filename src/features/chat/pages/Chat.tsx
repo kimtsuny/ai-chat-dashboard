@@ -170,7 +170,16 @@ const Chat = () => {
   return (
     <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-[#121217] via-[#0f0f11] to-[#0f0f11]">
 
-      {messages.length === 0 ? (
+      {loading && currentConversationId ? (
+        <>
+          <div className="flex-1 w-full overflow-y-auto min-h-0">
+            <ChatSkeleton />
+          </div>
+          <div className="shrink-0 mx-auto w-full max-w-5xl">
+            <ChatInput onSend={handleSend} />
+          </div>
+        </>
+      ) : !currentConversationId ? (
         <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-5xl">
           <div className="flex flex-col flex-1 items-center justify-center min-h-0">
             <ChatWelcome />
@@ -181,13 +190,8 @@ const Chat = () => {
       ) : (
         <>
           <div className="flex-1 w-full overflow-y-auto min-h-0">
-            {loading ? (
-              <ChatSkeleton />
-            ) : (
-              <MessageList messages={messages} />
-            )}
+            <MessageList messages={messages} />
           </div>
-
           <div className="shrink-0 mx-auto w-full max-w-5xl">
             <ChatInput onSend={handleSend} />
           </div>

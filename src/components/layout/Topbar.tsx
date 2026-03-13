@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { logout } from "@/features/auth/services/supabase";
+import { ProfileDialog } from "@/features/user/components/ProfileDialog";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -27,6 +29,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const navigate = useNavigate();
   const { user, setUser } = useAuth()
   const { setCurrentConversationId } = useChat()
+  const [profileOpen, setProfileOpen] = useState(false)
 
   return (
     <header className="flex items-center justify-between h-14 px-2 pt-3 pb-2">
@@ -44,7 +47,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-4 rounded-full hover:bg-[#1e1e24] px-2 py-1 transition-all duration-200">
               <Avatar className="h-8 w-8 ring-2 ring-[#2e2e36]">
-                <AvatarImage src="https://github.com/shadcn.png" />
+               <AvatarImage src={user?.avatar_url ?? undefined} />
                 <AvatarFallback className="bg-[#24242b] text-[#f3f4f6]">U</AvatarFallback>
               </Avatar>
               <ChevronDown className="w-4 h-4 text-[#9ca3af]" />
@@ -65,7 +68,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
             <DropdownMenuSeparator className="bg-[#2e2e36]" />
 
-            <DropdownMenuItem className="text-[#9ca3af] hover:text-[#f3f4f6] focus:bg-[#24242b] focus:text-[#f3f4f6] cursor-pointer">
+            <DropdownMenuItem className="text-[#9ca3af] hover:text-[#f3f4f6] focus:bg-[#24242b] focus:text-[#f3f4f6] cursor-pointer" onClick={() => setProfileOpen(true)}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
@@ -104,6 +107,15 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
 
       </div>
+
+      {/* Profile Dialog */}
+      <ProfileDialog
+        open={profileOpen}
+        onOpenChange={setProfileOpen}
+        username={user?.email?.split("@")[0]}
+        email={user?.email}
+          avatarUrl={user?.avatar_url}
+      />
     </header>
   );
 }
