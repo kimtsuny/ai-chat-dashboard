@@ -7,15 +7,17 @@ export default function AuthCallback() {
 
     const handleAuth = async () => {
 
-      const { error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href
-      )
+      const { data, error } = await supabase.auth.getSession()
 
       if (error) {
-        console.error("OAuth error:", error)
+        console.error(error)
       }
 
-      window.location.replace("/chat")
+      if (data.session) {
+        window.location.replace("/chat")
+      } else {
+        window.location.replace("/")
+      }
 
     }
 
