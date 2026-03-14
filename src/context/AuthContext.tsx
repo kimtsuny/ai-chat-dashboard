@@ -3,8 +3,8 @@ import { createContext, useState, ReactNode, useContext, useEffect } from "react
 
 type User = {
   id: string
-  email: string,
-  role: string,
+  email: string
+  role: string
   avatar_url: string | null
   cover_url: string | null
   created_at: string | null
@@ -13,16 +13,15 @@ type User = {
 type AuthContextType = {
   user: User
   setUser: (user: User) => void
+  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUserState] = useState<User>(() => {
-    const storedUser = localStorage.getItem("user")
-    return storedUser ? JSON.parse(storedUser) : null
-  })
 
+  const [user, setUserState] = useState<User>(null)
+  const [loading, setLoading] = useState(true)
 
   const setUser = (user: User) => {
     setUserState(user)
@@ -34,47 +33,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
- useEffect(() => {
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
+  const fetchUserProfile = async (session: any) => {
 
-      if (session?.user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("role, avatar_url, cover_url, created_at")
+      .eq("id", session.user.id)
+      .single()
 
-        const { data } = await supabase
-          .from("profiles")
-          .select("role, avatar_url, cover_url, created_at")
-          .eq("id", session.user.id)
-          .single()
+    setUser({
+      id: session.user.id,
+      email: session.user.email!,
+      role: data?.role ?? "user",
+      avatar_url: data?.avatar_url ?? null,
+      cover_url: data?.cover_url ?? null,
+      created_at: data?.created_at ?? null
+    })
 
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          role: data?.role ?? "user",
-          avatar_url: data?.avatar_url ?? null,
-          cover_url: data?.cover_url ?? null,
-          created_at: data?.created_at ?? null,
-        })
-
-      } else {
-        setUser(null)
-      }
-    }
-  )
-
-  return () => {
-    listener.subscription.unsubscribe()
+    setLoading(false)
   }
 
-}, [])
+  useEffect(() => {
+
+    const loadSession = async () => {
+
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session) {
+        await fetchUserProfile(session)
+      } else {
+        setLoading(false)
+      }
+
+    }
+
+    loadSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+
+        if (session) {
+          await fetchUserProfile(session)
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
+
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+
+  }, [])
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, loading }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
 export function useAuth() {
+
   const context = useContext(AuthContext)
 
   if (!context) {
