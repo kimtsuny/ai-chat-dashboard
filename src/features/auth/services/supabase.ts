@@ -17,14 +17,12 @@ export async function login(email: string, password: string) {
 }
 
 
-
 // تسجيل دخول Google
 export async function loginWithGoogle() {
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      flowType: "pkce",
       redirectTo: `${window.location.origin}/auth/callback`
     }
   })
@@ -32,8 +30,8 @@ export async function loginWithGoogle() {
   if (error) {
     console.error(error)
   }
-}
 
+}
 
 
 // تسجيل خروج
