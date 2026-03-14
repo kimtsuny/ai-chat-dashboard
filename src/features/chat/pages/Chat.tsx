@@ -8,16 +8,19 @@ import { useChat } from '@/context/ChatContext'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 const Chat = () => {
 
   const [messages, setMessages] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [typing, setTyping] = useState(false)
 
   const { user } = useAuth()
   const { currentConversationId, setCurrentConversationId, fetchConversations } = useChat()
+
+  // لمعرفة هل تم إنشاء المحادثة من أول رسالة
+  const creatingConversationRef = useRef(false)
 
   // reset عند تغيير المستخدم
   useEffect(() => {
@@ -25,15 +28,28 @@ const Chat = () => {
     setMessages([])
   }, [user])
 
+
+  // مسح الرسائل فقط عند تبديل المحادثة
+  useEffect(() => {
+
+    if (!currentConversationId) return
+
+    if (creatingConversationRef.current) {
+      creatingConversationRef.current = false
+      return
+    }
+
+    setMessages([])
+
+  }, [currentConversationId])
+
+
   // تحميل الرسائل
   useEffect(() => {
 
     async function fetchMessages() {
 
-      if (!currentConversationId) {
-        setLoading(false)
-        return
-      }
+      if (!currentConversationId) return
 
       setLoading(true)
 
@@ -52,6 +68,7 @@ const Chat = () => {
     fetchMessages()
 
   }, [currentConversationId])
+
 
   // realtime
   useEffect(() => {
@@ -94,11 +111,12 @@ const Chat = () => {
 
   }, [currentConversationId])
 
+
   async function handleSend(text: string) {
 
     let conversationId = currentConversationId
 
-    // إظهار رسالة المستخدم فورًا
+    // اظهار رسالة المستخدم فوراً
     setMessages(prev => [
       ...prev,
       {
@@ -108,8 +126,10 @@ const Chat = () => {
       }
     ])
 
-    // إنشاء محادثة إذا كان المستخدم مسجل
+    // إنشاء محادثة جديدة
     if (user && !conversationId) {
+
+      creatingConversationRef.current = true
 
       const { data: conv } = await supabase
         .from("conversations")
@@ -130,7 +150,7 @@ const Chat = () => {
 
     }
 
-    // حفظ رسالة المستخدم إذا كان مسجل
+    // حفظ رسالة المستخدم
     if (user && conversationId) {
 
       await supabase.from("messages").insert([
@@ -143,7 +163,6 @@ const Chat = () => {
 
     }
 
-    // typing
     setTyping(true)
 
     const { data, error } = await supabase.functions.invoke("chat", {
@@ -152,16 +171,11 @@ const Chat = () => {
 
     setTyping(false)
 
-    if (error) {
-      console.error(error)
-      return
-    }
+    if (error) return
 
     const reply = data?.reply
-
     if (!reply) return
 
-    // إظهار الرد فورًا
     setMessages(prev => [
       ...prev,
       {
@@ -171,7 +185,6 @@ const Chat = () => {
       }
     ])
 
-    // حفظ الرد إذا كان المستخدم مسجل
     if (user && conversationId) {
 
       await supabase.from("messages").insert([
@@ -186,19 +199,24 @@ const Chat = () => {
 
   }
 
+
   return (
     <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-[#121217] via-[#0f0f11] to-[#0f0f11]">
 
-      {loading && currentConversationId ? (
+      {loading && messages.length === 0 ? (
+
         <>
           <div className="flex-1 w-full overflow-y-auto min-h-0">
             <ChatSkeleton />
           </div>
+
           <div className="shrink-0 mx-auto w-full max-w-5xl">
             <ChatInput onSend={handleSend} />
           </div>
         </>
+
       ) : messages.length === 0 ? (
+
         <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-5xl">
           <div className="flex flex-col flex-1 items-center justify-center min-h-0">
             <ChatWelcome />
@@ -206,19 +224,18 @@ const Chat = () => {
             <ChatInput onSend={handleSend} />
           </div>
         </div>
+
       ) : (
+
         <>
           <div className="flex-1 w-full overflow-y-auto min-h-0">
 
             <MessageList messages={messages} />
 
             {typing && (
-              <div className="flex justify-start px-4 py-3 max-w-3xl mx-auto w-full mb-8">
-                <div className="px-4 py-3">
-
-                  <span className="typing-dot" />
-
-                  <style>
+              <div className="flex justify-start px-4 py-3 max-w-3xl mx-auto w-full">
+                <span className="typing-dot" />
+                 <style>
                     {`
                     .typing-dot {
                       width: 10px;
@@ -238,11 +255,9 @@ const Chat = () => {
                         transform: scale(1.4);
                         opacity: 1;
                       }
-                    }
+                        }
                     `}
                   </style>
-
-                </div>
               </div>
             )}
 

@@ -15,7 +15,7 @@ const ChatInput = ({ onSend }) => {
     setText("")
   }
   return (
-    <form className='mx-auto max-w-3xl w-full p-3 md:p-1 sm:mb-2'
+    <form className='mx-auto max-w-3xl w-full p-3 md:p-1 sm:mb-1'
       onSubmit={handleSubmit}
     >
       <div className='rounded-2xl p-3 bg-[#1e1e24] border border-[#2e2e36] transition-all duration-300 focus-within:border-[#8b5cf6]/50 focus-within:shadow-[0_0_20px_rgba(139,92,246,0.15)]'>
@@ -71,7 +71,7 @@ const ChatInput = ({ onSend }) => {
 
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-[#9ca3af] sm:text-[13px]">
+        <div className="mt-2 flex items-center justify-between text-xs text-[#9ca3af] sm:text-[13px]">
           <Button
             type="button"
             variant="ghost"

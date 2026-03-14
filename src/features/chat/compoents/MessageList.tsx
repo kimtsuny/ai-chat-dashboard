@@ -15,7 +15,7 @@ const MessageList = ({ messages }: any) => {
   return (
     <div className="flex w-full flex-col flex-1 overflow-y-auto min-h-0">
 
-      <div className="flex flex-col gap-4 px-4 py-6 max-w-3xl mx-auto w-full">
+      <div className="flex flex-col gap-5 px-4 py-6 max-w-3xl mx-auto w-full">
 
         {messages.map((msg: any) => {
           const isUser = msg.role === "user";
