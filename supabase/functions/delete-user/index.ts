@@ -15,50 +15,119 @@ serve(async (req) => {
 
   try {
 
-    const { userId } = await req.json()
+    const { userId, deleteAll } = await req.json()
 
     const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_URL"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
     )
 
-    // حذف الرسائل
+    // -------------------------
+    // حذف ملفات storage
+    // -------------------------
+    const deleteUserStorage = async (id: string) => {
+
+      // avatars
+      const { data: avatarFiles } = await supabaseAdmin
+  .storage
+  .from("avatars")
+  .list()
+
+if (avatarFiles) {
+
+  const avatarPaths = avatarFiles
+    .filter(file => file.name.includes(id))
+    .map(file => file.name)
+
+  if (avatarPaths.length > 0) {
     await supabaseAdmin
-      .from("messages")
-      .delete()
-      .eq("user_id", userId)
+      .storage
+      .from("avatars")
+      .remove(avatarPaths)
+  }
 
-    // حذف المحادثات
+}
+
+      // covers
+     const { data: coverFiles } = await supabaseAdmin
+  .storage
+  .from("covers")
+  .list()
+
+if (coverFiles) {
+
+  const coverPaths = coverFiles
+    .filter(file => file.name.includes(id))
+    .map(file => file.name)
+
+  if (coverPaths.length > 0) {
     await supabaseAdmin
-      .from("conversations")
-      .delete()
-      .eq("user_id", userId)
+      .storage
+      .from("covers")
+      .remove(coverPaths)
+  }
 
-    // حذف البروفايل
-    await supabaseAdmin
-      .from("profiles")
-      .delete()
-      .eq("id", userId)
+}
+    }
 
-    // حذف المستخدم من auth
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    // -------------------------
+    // حذف بيانات المستخدم
+    // -------------------------
+    const deleteUserData = async (id: string) => {
 
-    if (error) {
+      await supabaseAdmin
+        .from("messages")
+        .delete()
+        .eq("user_id", id)
+
+      await supabaseAdmin
+        .from("conversations")
+        .delete()
+        .eq("user_id", id)
+
+      await supabaseAdmin
+        .from("profiles")
+        .delete()
+        .eq("id", id)
+
+      await deleteUserStorage(id)
+
+      await supabaseAdmin.auth.admin.deleteUser(id)
+    }
+
+    // -------------------------
+    // حذف كل المستخدمين (Admin)
+    // -------------------------
+    if (deleteAll) {
+
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers()
+
+      if (error) throw error
+
+      for (const u of data.users) {
+
+        const id = u.id
+
+        // لا تحذف الأدمن الذي ضغط الزر
+        if (id === userId) continue
+
+        await deleteUserData(id)
+      }
+
       return new Response(
-        JSON.stringify({ error: error.message }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       )
     }
 
+    // -------------------------
+    // حذف مستخدم واحد
+    // -------------------------
+    await deleteUserData(userId)
+
     return new Response(
       JSON.stringify({ success: true }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     )
 
   } catch (err) {
@@ -67,10 +136,9 @@ serve(async (req) => {
       JSON.stringify({ error: String(err) }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     )
-
   }
 
 })

@@ -70,24 +70,18 @@ export async function deleteMyAccount(userId: string): Promise<ServiceResult> {
  *   - RLS policies that restrict DELETE on `profiles` to admin users only
  *   - Ideally, an Edge Function that verifies the caller's role server-side
  */
-export async function deleteAllUsers(): Promise<ServiceResult> {
-    try {
-        const { error } = await supabase
-            .from("profiles")
-            .delete()
-            .neq("role", "admin")
+export async function deleteAllUsers(userId: string): Promise<ServiceResult> {
 
-        if (error) {
-            console.error("Failed to delete users:", error)
-            return { success: false, error: error.message }
-        }
-
-        return { success: true }
-    } catch (err) {
-        console.error("Unexpected error deleting all users:", err)
-        return {
-            success: false,
-            error: err instanceof Error ? err.message : "An unexpected error occurred",
-        }
+  const { error } = await supabase.functions.invoke("delete-user", {
+    body: {
+      deleteAll: true,
+      userId: userId
     }
+  })
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
 }

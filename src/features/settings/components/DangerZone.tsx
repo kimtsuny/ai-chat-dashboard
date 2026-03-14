@@ -65,7 +65,7 @@ export default function DangerZone() {
         setIsDeletingAll(true)
 
         try {
-            const result = await deleteAllUsers()
+            const result = await deleteAllUsers(user.id)
 
             if (!result.success) {
                 console.error("Delete all users failed:", result.error)
