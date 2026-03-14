@@ -7,17 +7,17 @@ export default function AuthCallback() {
 
     const handleAuth = async () => {
 
-      const { data, error } = await supabase.auth.getSession()
+      console.log("URL:", window.location.href)
 
-      if (error) {
-        console.error(error)
-      }
+      const { data, error } = await supabase.auth.exchangeCodeForSession(
+        window.location.href
+      )
 
-      if (data.session) {
-        window.location.replace("/chat")
-      } else {
-        window.location.replace("/")
-      }
+      console.log("SESSION:", data)
+      console.log("ERROR:", error)
+
+      // أوقف التحويل مؤقتاً
+      // window.location.replace("/chat")
 
     }
 
@@ -27,15 +27,7 @@ export default function AuthCallback() {
 
   return (
     <div className="flex items-center justify-center h-screen bg-[#0f0f13]">
-      <div className="flex flex-col items-center gap-6">
-
-        <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-
-        <p className="text-sm text-[#9ca3af]">
-          Signing you in...
-        </p>
-
-      </div>
+      <p className="text-white">Checking login...</p>
     </div>
   )
 }
