@@ -1,33 +1,27 @@
 import { useEffect } from "react"
-import { supabase } from "@/lib/supabase"
 
 export default function AuthCallback() {
 
   useEffect(() => {
 
-    const handleAuth = async () => {
-
-      console.log("URL:", window.location.href)
-
-      const { data, error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href
-      )
-
-      console.log("SESSION:", data)
-      console.log("ERROR:", error)
-
-      // أوقف التحويل مؤقتاً
-      // window.location.replace("/chat")
-
-    }
-
-    handleAuth()
+    // Supabase سيقرأ access_token تلقائياً من الرابط
+    setTimeout(() => {
+      window.location.replace("/chat")
+    }, 500)
 
   }, [])
 
   return (
     <div className="flex items-center justify-center h-screen bg-[#0f0f13]">
-      <p className="text-white">Checking login...</p>
+      <div className="flex flex-col items-center gap-6">
+
+        <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+
+        <p className="text-sm text-[#9ca3af]">
+          Signing you in...
+        </p>
+
+      </div>
     </div>
   )
 }
