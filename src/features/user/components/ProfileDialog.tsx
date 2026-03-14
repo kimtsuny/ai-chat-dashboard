@@ -150,7 +150,7 @@ useEffect(() => {
         <DialogTitle className="sr-only">User Profile</DialogTitle>
 
         <ProfileHeader
-          username={user?.email}
+          username={user?.email?.split("@")[0]}
           email={user?.email}
           avatarUrl={currentAvatar ?? undefined}
           coverUrl={currentCover ?? undefined}
