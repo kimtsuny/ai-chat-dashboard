@@ -4,6 +4,7 @@ import { Topbar } from "./Topbar"
 import { Sidebar } from "./Sidebar/Sidebar"
 import Chat from "@/features/chat/pages/Chat"
 import Dashboard from "@/features/dashboard/pages/Dashboard"
+import Settings from "@/features/settings/pages/Settings"
 
 export function Layout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -33,6 +34,7 @@ export function Layout() {
           <Routes>
             <Route path="/chat" element={<Chat />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/chat" replace />} />
           </Routes>
         </main>
