@@ -66,32 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
 
-    const initAuth = async () => {
-
-      try {
-
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (session) {
-          await fetchUserProfile(session)
-        } else {
-          setUser(null)
-          setLoading(false)
-        }
-
-      } catch (err) {
-        console.error("Session error:", err)
-        setLoading(false)
-      }
-
-    }
-
-    initAuth()
-
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (_event, session) => {
-
-        setLoading(true)
 
         if (session) {
           await fetchUserProfile(session)
