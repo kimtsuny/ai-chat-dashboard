@@ -34,43 +34,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const fetchUserProfile = async (session: any) => {
+    try {
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("role, avatar_url, cover_url, created_at")
-      .eq("id", session.user.id)
-      .single()
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role, avatar_url, cover_url, created_at")
+        .eq("id", session.user.id)
+        .single()
 
-    setUser({
-      id: session.user.id,
-      email: session.user.email!,
-      role: data?.role ?? "user",
-      avatar_url: data?.avatar_url ?? null,
-      cover_url: data?.cover_url ?? null,
-      created_at: data?.created_at ?? null
-    })
+      if (error) {
+        console.error("Profile error:", error)
+      }
 
-    setLoading(false)
+      setUser({
+        id: session.user.id,
+        email: session.user.email!,
+        role: data?.role ?? "user",
+        avatar_url: data?.avatar_url ?? null,
+        cover_url: data?.cover_url ?? null,
+        created_at: data?.created_at ?? null
+      })
+
+    } catch (err) {
+      console.error("Unexpected error:", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
 
-    const loadSession = async () => {
+    const initSession = async () => {
+      try {
 
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (session) {
-        await fetchUserProfile(session)
-      } else {
-        setLoading(false)
-      }
-
-    }
-
-    loadSession()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+        const { data: { session } } = await supabase.auth.getSession()
 
         if (session) {
           await fetchUserProfile(session)
@@ -79,8 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setLoading(false)
         }
 
+      } catch (err) {
+        console.error("Session error:", err)
+        setLoading(false)
       }
-    )
+    }
+
+    initSession()
+
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+
+        if (session) {
+          await fetchUserProfile(session)
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
+
+      })
 
     return () => {
       subscription.unsubscribe()

@@ -8,32 +8,28 @@ import { useChat } from '@/context/ChatContext'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const Chat = () => {
+
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const isSendingRef = useRef(false)
+  const [typing, setTyping] = useState(false)
 
   const { user } = useAuth()
   const { currentConversationId, setCurrentConversationId, fetchConversations } = useChat()
 
-  // Reset chat state when user changes (login/logout)
+  // reset عند تغيير المستخدم
   useEffect(() => {
     setCurrentConversationId(null)
     setMessages([])
   }, [user])
 
+  // تحميل الرسائل
   useEffect(() => {
-    if (currentConversationId) {
-      setLoading(true)
-    }
-  }, [currentConversationId])
 
-  // 🔥 fetch messages — guarded by isSendingRef to avoid overwriting mid-send
-  useEffect(() => {
     async function fetchMessages() {
-      if (isSendingRef.current) return
+
       if (!currentConversationId) {
         setLoading(false)
         return
@@ -41,103 +37,102 @@ const Chat = () => {
 
       setLoading(true)
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("messages")
         .select("*")
         .eq("conversation_id", currentConversationId)
         .order("created_at", { ascending: true })
 
-      if (!error && data) {
-        setMessages((prev) => {
-          const typingMsgs = prev.filter((msg) => msg.isTyping)
-          return typingMsgs.length > 0 ? [...data, ...typingMsgs] : data
-        })
-      }
+      if (data) setMessages(data)
 
       setLoading(false)
+
     }
 
     fetchMessages()
+
+  }, [currentConversationId])
+
+  // realtime
+  useEffect(() => {
+
+    if (!currentConversationId) return
+
+    const channel = supabase
+      .channel("messages-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${currentConversationId}`,
+        },
+        (payload) => {
+
+          setMessages((prev) => {
+
+            const exists = prev.find(
+              (m) =>
+                m.role === payload.new.role &&
+                m.content === payload.new.content
+            )
+
+            if (exists) return prev
+
+            return [...prev, payload.new]
+
+          })
+
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+
   }, [currentConversationId])
 
   async function handleSend(text: string) {
-    isSendingRef.current = true
 
-    // 🟢 1. user message (UI only)
-    const userMsg = {
-      id: Date.now().toString(),
-      content: text,
-      role: "user",
-    }
+    let conversationId = currentConversationId
 
-    // 🔵 2. loading message
-    const tempAiMsg = {
-      id: "loading-" + Date.now(),
-      content: "",
-      role: "ai",
-      isTyping: true
-    }
-
-    setMessages((prev) => [...prev, userMsg, tempAiMsg])
-
-    // 🧠 3. call AI
-    const res = await fetch(
-      "https://eodtylujqrywxflylqin.supabase.co/functions/v1/chat",
+    // إظهار رسالة المستخدم فورًا
+    setMessages(prev => [
+      ...prev,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: text }),
+        id: Date.now(),
+        role: "user",
+        content: text
       }
-    )
+    ])
 
-    const data = await res.json()
-    const reply = data.reply
+    // إنشاء محادثة إذا كان المستخدم مسجل
+    if (user && !conversationId) {
 
-    // 🔁 4. replace loading with real reply
-    setMessages((prev) => {
-      const updated = [...prev]
-      const index = updated.findIndex(msg => msg.id === tempAiMsg.id)
+      const { data: conv } = await supabase
+        .from("conversations")
+        .insert([
+          {
+            title: text.slice(0, 20),
+            user_id: user.id,
+          },
+        ])
+        .select()
+        .single()
 
-      if (index !== -1) {
-        updated[index] = {
-          id: Date.now().toString(),
-          content: reply,
-          role: "ai",
-          isTyping: false
-        }
-      }
+      conversationId = conv.id
 
-      return updated
-    })
+      setCurrentConversationId(conversationId)
 
-    // 💾 5. persist to DB (if logged in) — ALL inserts BEFORE setCurrentConversationId
-    if (user) {
-      let conversationId = currentConversationId
+      fetchConversations()
 
-      // Create conversation if needed
-      if (!conversationId) {
-        const { data, error } = await supabase
-          .from("conversations")
-          .insert([
-            {
-              title: text.slice(0, 20),
-              user_id: user.id,
-            },
-          ])
-          .select()
-          .single()
+    }
 
-        if (error) {
-          isSendingRef.current = false
-          return
-        }
+    // حفظ رسالة المستخدم إذا كان مسجل
+    if (user && conversationId) {
 
-        conversationId = data.id
-      }
-
-      // Save user message
       await supabase.from("messages").insert([
         {
           content: text,
@@ -146,7 +141,39 @@ const Chat = () => {
         },
       ])
 
-      // Save AI reply
+    }
+
+    // typing
+    setTyping(true)
+
+    const { data, error } = await supabase.functions.invoke("chat", {
+      body: { message: text }
+    })
+
+    setTyping(false)
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const reply = data?.reply
+
+    if (!reply) return
+
+    // إظهار الرد فورًا
+    setMessages(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        role: "ai",
+        content: reply
+      }
+    ])
+
+    // حفظ الرد إذا كان المستخدم مسجل
+    if (user && conversationId) {
+
       await supabase.from("messages").insert([
         {
           content: reply,
@@ -155,16 +182,8 @@ const Chat = () => {
         },
       ])
 
-      // ✅ 6. NOW safe to set conversation ID — data is already in DB
-      isSendingRef.current = false
-
-      if (!currentConversationId) {
-        setCurrentConversationId(conversationId)
-        fetchConversations()
-      }
-    } else {
-      isSendingRef.current = false
     }
+
   }
 
   return (
@@ -179,7 +198,7 @@ const Chat = () => {
             <ChatInput onSend={handleSend} />
           </div>
         </>
-      ) : !currentConversationId ? (
+      ) : messages.length === 0 ? (
         <div className="flex flex-col flex-1 min-h-0 mx-auto w-full max-w-5xl">
           <div className="flex flex-col flex-1 items-center justify-center min-h-0">
             <ChatWelcome />
@@ -190,8 +209,45 @@ const Chat = () => {
       ) : (
         <>
           <div className="flex-1 w-full overflow-y-auto min-h-0">
+
             <MessageList messages={messages} />
+
+            {typing && (
+              <div className="flex justify-start px-4 py-3 max-w-3xl mx-auto w-full mb-8">
+                <div className="px-4 py-3">
+
+                  <span className="typing-dot" />
+
+                  <style>
+                    {`
+                    .typing-dot {
+                      width: 10px;
+                      height: 10px;
+                      background-color: #a855f7;
+                      border-radius: 9999px;
+                      display: inline-block;
+                      animation: pulseDot 2s ease-in-out infinite;
+                    }
+
+                    @keyframes pulseDot {
+                      0%,100% {
+                        transform: scale(1.1);
+                        opacity: .5;
+                      }
+                      50% {
+                        transform: scale(1.4);
+                        opacity: 1;
+                      }
+                    }
+                    `}
+                  </style>
+
+                </div>
+              </div>
+            )}
+
           </div>
+
           <div className="shrink-0 mx-auto w-full max-w-5xl">
             <ChatInput onSend={handleSend} />
           </div>

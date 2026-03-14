@@ -36,36 +36,7 @@ const MessageList = ({ messages }: any) => {
                       : "bg-[#1e1e24] text-[#f3f4f6] border border-[#2e2e36]"
                 )}
               >
-                {msg.isTyping ? (
-                  <div className="flex items-center">
-                    <span className="typing-dot" />
-                    <style>
-                      {`
-  .typing-dot {
-    width: 10px;
-    height: 10px;
-  background-color: #a855f7;
-    border-radius: 9999px;
-    animation: pulseDot 2s ease-in-out infinite;
-    
-  }
-
-  @keyframes pulseDot {
-    0%, 100% {
-      transform: scale(1.1);
-      opacity: 0.5;
-    }
-    50% {
-      transform: scale(1.4);
-      opacity: 1;
-    }
-  }
-`}
-                    </style>
-                  </div>
-                ) : (
-                  <span>{msg.content}</span>
-                )}
+                <span className="">{msg.content}</span>
               </div>
 
             </div>
