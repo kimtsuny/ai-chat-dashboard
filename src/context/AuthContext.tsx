@@ -33,19 +33,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const fetchUserProfile = async (session: any) => {
+  const fetchUserProfile = async (user: any) => {
 
     try {
 
       const { data } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
-        .eq("id", session.user.id)
+        .eq("id", user.id)
         .maybeSingle()
 
       setUser({
-        id: session.user.id,
-        email: session.user.email!,
+        id: user.id,
+        email: user.email!,
         role: data?.role ?? "user",
         avatar_url: data?.avatar_url ?? null,
         cover_url: data?.cover_url ?? null,
@@ -66,10 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
 
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { user } } = await supabase.auth.getUser()
 
-        if (session) {
-          await fetchUserProfile(session)
+        if (user) {
+          await fetchUserProfile(user)
         } else {
           setUser(null)
           setLoading(false)
@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (_event, session) => {
 
-        if (session) {
-          await fetchUserProfile(session)
+        if (session?.user) {
+          await fetchUserProfile(session.user)
         } else {
           setUser(null)
           setLoading(false)
