@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const setUser = (user: User) => {
+
     setUserState(user)
 
     if (user) {
@@ -31,21 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem("user")
     }
+
   }
 
-  const fetchUserProfile = async (user: any) => {
+  const fetchUserProfile = async (supabaseUser: any) => {
 
     try {
 
       const { data } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
-        .eq("id", user.id)
+        .eq("id", supabaseUser.id)
         .maybeSingle()
 
       setUser({
-        id: user.id,
-        email: user.email!,
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
         role: data?.role ?? "user",
         avatar_url: data?.avatar_url ?? null,
         cover_url: data?.cover_url ?? null,
@@ -53,9 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
     } catch (err) {
+
       console.error("Profile fetch error:", err)
+
     } finally {
+
       setLoading(false)
+
     }
 
   }
@@ -66,24 +72,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
 
+        // 1️⃣ محاولة جلب المستخدم من Supabase
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
           await fetchUserProfile(user)
-        } else {
-          setUser(null)
-          setLoading(false)
+          return
         }
 
+        // 2️⃣ fallback من localStorage
+        const savedUser = localStorage.getItem("user")
+
+        if (savedUser) {
+          setUserState(JSON.parse(savedUser))
+        }
+
+        setLoading(false)
+
       } catch (err) {
+
         console.error("Session error:", err)
         setLoading(false)
+
       }
 
     }
 
     initSession()
 
+    // 3️⃣ الاستماع لتغيرات تسجيل الدخول
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (_event, session) => {
 
@@ -118,4 +135,5 @@ export function useAuth() {
   }
 
   return context
+
 }
