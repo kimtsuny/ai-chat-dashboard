@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "./AuthContext"
+import { useLocation } from "react-router-dom"
 
 type Conversation = {
   id: string
@@ -22,6 +23,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
 
   const { user } = useAuth()
+  const location = useLocation()
 
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -52,13 +54,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   }
 
+  // ⭐ يجلب المحادثات عند تسجيل الدخول أو تغيير الصفحة
   useEffect(() => {
 
     if (!user) return
 
     fetchConversations()
 
-  }, [user])
+  }, [user, location.pathname])
+
 
   const deleteConversation = async (id: string) => {
 
