@@ -1,13 +1,26 @@
 import { useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+import { useNavigate } from "react-router-dom"
 
 export default function AuthCallback() {
 
+  const navigate = useNavigate()
+
   useEffect(() => {
 
-    // Supabase سيقرأ access_token تلقائياً من الرابط
-    setTimeout(() => {
-      window.location.replace("/chat")
-    }, 500)
+    const handleAuth = async () => {
+
+      const { data } = await supabase.auth.getSession()
+
+      if (data.session) {
+        navigate("/chat")
+      } else {
+        navigate("/login")
+      }
+
+    }
+
+    handleAuth()
 
   }, [])
 
