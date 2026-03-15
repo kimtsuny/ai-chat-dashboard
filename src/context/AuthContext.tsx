@@ -37,15 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
         .eq("id", session.user.id)
-        .single()
-
-      if (error) {
-        console.error("Profile error:", error)
-      }
+        .maybeSingle()
 
       setUser({
         id: session.user.id,
@@ -57,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
     } catch (err) {
-      console.error("Unexpected error:", err)
+      console.error("Profile fetch error:", err)
     } finally {
       setLoading(false)
     }
