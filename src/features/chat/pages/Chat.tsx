@@ -19,8 +19,17 @@ const Chat = () => {
   const { user } = useAuth()
   const { currentConversationId, setCurrentConversationId, fetchConversations } = useChat()
 
-  // لمعرفة هل تم إنشاء المحادثة من أول رسالة
   const creatingConversationRef = useRef(false)
+
+  // ⭐ جلب المحادثات عند دخول الصفحة
+  useEffect(() => {
+
+    if (!user) return
+
+    fetchConversations()
+
+  }, [user])
+
 
   // reset عند تغيير المستخدم
   useEffect(() => {
@@ -29,7 +38,7 @@ const Chat = () => {
   }, [user])
 
 
-  // مسح الرسائل فقط عند تبديل المحادثة
+  // مسح الرسائل عند تغيير المحادثة
   useEffect(() => {
 
     if (!currentConversationId) return
@@ -116,7 +125,6 @@ const Chat = () => {
 
     let conversationId = currentConversationId
 
-    // اظهار رسالة المستخدم فوراً
     setMessages(prev => [
       ...prev,
       {
@@ -126,7 +134,6 @@ const Chat = () => {
       }
     ])
 
-    // إنشاء محادثة جديدة
     if (user && !conversationId) {
 
       creatingConversationRef.current = true
@@ -150,7 +157,6 @@ const Chat = () => {
 
     }
 
-    // حفظ رسالة المستخدم
     if (user && conversationId) {
 
       await supabase.from("messages").insert([
@@ -235,29 +241,6 @@ const Chat = () => {
             {typing && (
               <div className="flex justify-start px-4 py-3 max-w-3xl mx-auto w-full">
                 <span className="typing-dot" />
-                 <style>
-                    {`
-                    .typing-dot {
-                      width: 10px;
-                      height: 10px;
-                      background-color: #a855f7;
-                      border-radius: 9999px;
-                      display: inline-block;
-                      animation: pulseDot 2s ease-in-out infinite;
-                    }
-
-                    @keyframes pulseDot {
-                      0%,100% {
-                        transform: scale(1.1);
-                        opacity: .5;
-                      }
-                      50% {
-                        transform: scale(1.4);
-                        opacity: 1;
-                      }
-                        }
-                    `}
-                  </style>
               </div>
             )}
 
