@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase"
-import { createContext, useState, ReactNode, useContext, useEffect } from "react"
+import { createContext, useState, ReactNode, useContext, useEffect, useCallback } from "react"
 
 type User = {
   id: string
@@ -21,25 +21,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 
-  const [user, setUserState] = useState<User>(null)
+  const [user, setUser] = useState<User>(null)
   const [loading, setLoading] = useState(true)
-const [initialized, setInitialized] = useState(false)
-  const setUser = (user: User) => {
+  const [initialized, setInitialized] = useState(false)
 
-    setUserState(user)
-
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user))
-    } else {
-      localStorage.removeItem("user")
-    }
-
-  }
-
-  const fetchUserProfile = async (supabaseUser: any) => {
-
+  const fetchUserProfile = useCallback(async (supabaseUser: { id: string; email?: string }) => {
     try {
-
       const { data } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
@@ -52,51 +39,67 @@ const [initialized, setInitialized] = useState(false)
         role: data?.role ?? "user",
         avatar_url: data?.avatar_url ?? null,
         cover_url: data?.cover_url ?? null,
-        created_at: data?.created_at ?? null
+        created_at: data?.created_at ?? null,
+      })
+    } catch (err) {
+      console.error("Profile fetch error:", err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    // 1️⃣ Force fresh session from Supabase on every mount/refresh
+    const initSession = async () => {
+      try {
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+
+        if (!isMounted) return
+
+        if (supabaseUser) {
+          await fetchUserProfile(supabaseUser)
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error("Session init error:", err)
+        if (isMounted) {
+          setUser(null)
+          setLoading(false)
+        }
+      } finally {
+        if (isMounted) {
+          setInitialized(true)
+        }
+      }
+    }
+
+    initSession()
+
+    // 2️⃣ Listen for future auth changes (login, logout, token refresh)
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) return
+
+        // Skip INITIAL_SESSION — we already handle it above with getUser()
+        if (event === "INITIAL_SESSION") return
+
+        if (session?.user) {
+          await fetchUserProfile(session.user)
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
       })
 
-    } catch (err) {
-
-      console.error("Profile fetch error:", err)
-
-    } finally {
-
-      setLoading(false)
-
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
     }
-
-  }
-
-useEffect(() => {
-
-  //  الاستماع (المصدر الرئيسي)
-  const { data: { subscription } } =
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-
-      if (session?.user) {
-        await fetchUserProfile(session.user)
-      } else {
-        setUser(null)
-        setLoading(false)
-      }
-
-      setInitialized(true) //  أهم سطر
-    })
-
-  //  قراءة سريعة من localStorage
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (!session) {
-      setUser(null)
-      setLoading(false)
-      setInitialized(true)
-    }
-  })
-
-  return () => {
-    subscription.unsubscribe()
-  }
-
-}, [])
+  }, [fetchUserProfile])
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading, initialized }}>
@@ -106,7 +109,6 @@ useEffect(() => {
 }
 
 export function useAuth() {
-
   const context = useContext(AuthContext)
 
   if (!context) {
@@ -114,5 +116,4 @@ export function useAuth() {
   }
 
   return context
-
 }
