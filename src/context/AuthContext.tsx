@@ -14,6 +14,7 @@ type AuthContextType = {
   user: User
   setUser: (user: User) => void
   loading: boolean
+  initialized: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [user, setUserState] = useState<User>(null)
   const [loading, setLoading] = useState(true)
-
+const [initialized, setInitialized] = useState(false)
   const setUser = (user: User) => {
 
     setUserState(user)
@@ -66,61 +67,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   }
 
-  useEffect(() => {
+useEffect(() => {
 
-    const initSession = async () => {
+  //  الاستماع (المصدر الرئيسي)
+  const { data: { subscription } } =
+    supabase.auth.onAuthStateChange(async (_event, session) => {
 
-      try {
-
-        // 1️⃣ محاولة جلب المستخدم من Supabase
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (user) {
-          await fetchUserProfile(user)
-          return
-        }
-
-        // 2️⃣ fallback من localStorage
-        const savedUser = localStorage.getItem("user")
-
-        if (savedUser) {
-          setUserState(JSON.parse(savedUser))
-        }
-
+      if (session?.user) {
+        await fetchUserProfile(session.user)
+      } else {
+        setUser(null)
         setLoading(false)
-
-      } catch (err) {
-
-        console.error("Session error:", err)
-        setLoading(false)
-
       }
 
+      setInitialized(true) //  أهم سطر
+    })
+
+  //  قراءة سريعة من localStorage
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) {
+      setUser(null)
+      setLoading(false)
+      setInitialized(true)
     }
+  })
 
-    initSession()
+  return () => {
+    subscription.unsubscribe()
+  }
 
-    // 3️⃣ الاستماع لتغيرات تسجيل الدخول
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange(async (_event, session) => {
-
-        if (session?.user) {
-          await fetchUserProfile(session.user)
-        } else {
-          setUser(null)
-          setLoading(false)
-        }
-
-      })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-
-  }, [])
+}, [])
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading }}>
+    <AuthContext.Provider value={{ user, setUser, loading, initialized }}>
       {children}
     </AuthContext.Provider>
   )

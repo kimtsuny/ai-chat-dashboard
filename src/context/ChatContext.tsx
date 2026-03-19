@@ -21,7 +21,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
 
-const { user } = useAuth()
+const { user, initialized } = useAuth()
 
 const [conversations, setConversations] = useState<Conversation[]>([])
 const [searchQuery, setSearchQuery] = useState("")
@@ -29,7 +29,7 @@ const [currentConversationId, setCurrentConversationId] = useState<string | null
 
 // 🔥 fetch conversations (memoized)
 const fetchConversations = useCallback(async () => {
-if (!user) return
+if (!user || !initialized) return
 
 
 try {
@@ -51,13 +51,13 @@ try {
 }
 
 
-}, [user])
+}, [user, initialized])
 
 // 🔥 fetch on login only
 useEffect(() => {
-if (!user) return
+if (!user || !initialized) return
 fetchConversations()
-}, [user, fetchConversations])
+}, [user, initialized, fetchConversations])
 
 // 🔥 delete conversation (memoized)
 const deleteConversation = useCallback(async (id: string) => {
