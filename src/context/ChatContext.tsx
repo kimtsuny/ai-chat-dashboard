@@ -51,7 +51,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // 🔥 fetch when auth is initialized and user is available
   useEffect(() => {
+    console.log("[Chat] useEffect triggered — initialized:", initialized, "user:", user?.id ?? "null")
     if (!initialized || !user) return
+    console.log("[Chat] Fetching conversations for user:", user.id)
     fetchConversations()
   }, [initialized, user, fetchConversations])
 

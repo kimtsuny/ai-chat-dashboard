@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         created_at: data?.created_at ?? null,
       })
     } catch (err) {
-      console.error("Profile fetch error:", err)
+      console.error("[Auth] Profile fetch error:", err)
     } finally {
       setLoading(false)
     }
@@ -51,47 +51,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true
 
-    // 1️⃣ Force fresh session from Supabase on every mount/refresh
-    const initSession = async () => {
-      try {
-        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
-
-        if (!isMounted) return
-
-        if (supabaseUser) {
-          await fetchUserProfile(supabaseUser)
-        } else {
-          setUser(null)
-          setLoading(false)
-        }
-      } catch (err) {
-        console.error("Session init error:", err)
-        if (isMounted) {
-          setUser(null)
-          setLoading(false)
-        }
-      } finally {
-        if (isMounted) {
-          setInitialized(true)
-        }
-      }
-    }
-
-    initSession()
-
-    // 2️⃣ Listen for future auth changes (login, logout, token refresh)
+    // Single source of truth: onAuthStateChange handles EVERYTHING
+    // - INITIAL_SESSION fires on mount (reads cached token from localStorage)
+    // - SIGNED_IN fires on login
+    // - SIGNED_OUT fires on logout
+    // - TOKEN_REFRESHED fires on token refresh
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!isMounted) return
+        console.log("[Auth] onAuthStateChange:", event, session?.user?.email ?? "no user")
 
-        // Skip INITIAL_SESSION — we already handle it above with getUser()
-        if (event === "INITIAL_SESSION") return
+        if (!isMounted) return
 
         if (session?.user) {
           await fetchUserProfile(session.user)
         } else {
           setUser(null)
           setLoading(false)
+        }
+
+        if (isMounted) {
+          setInitialized(true)
         }
       })
 
