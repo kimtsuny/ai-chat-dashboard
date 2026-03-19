@@ -114,16 +114,16 @@ const Chat = () => {
   }, [currentConversationId])
 
 
-  async function handleSend(text: string) {
+ async function handleSend(text: string) {
   let conversationId = currentConversationId
 
-  // 🟢 1. عرض رسالة المستخدم فورًا (optimistic)
-  const tempId = "temp-" + Date.now()
+  // 🟢 1. عرض رسالة المستخدم فورًا
+  const tempUserId = "temp-user-" + Date.now()
 
   setMessages(prev => [
     ...prev,
     {
-      id: tempId,
+      id: tempUserId,
       role: "user",
       content: text,
       created_at: new Date().toISOString()
@@ -150,7 +150,7 @@ const Chat = () => {
     fetchConversations()
   }
 
-  // 🟢 3. حفظ رسالة المستخدم بالـ DB
+  // 🟢 3. حفظ رسالة المستخدم
   if (user && conversationId) {
     const { data: inserted } = await supabase
       .from("messages")
@@ -164,10 +164,10 @@ const Chat = () => {
       .select()
       .single()
 
-    // 🧠 استبدال الرسالة المؤقتة بالرسالة الحقيقية
+    // استبدال المؤقت بالحقيقي
     setMessages(prev =>
       prev.map(msg =>
-        msg.id === tempId ? inserted : msg
+        msg.id === tempUserId ? inserted : msg
       )
     )
   }
@@ -186,15 +186,39 @@ const Chat = () => {
   const reply = data?.reply
   if (!reply) return
 
-  // 🔵 5. نحفظ رد AI فقط (بدون عرض محلي)
+  // 🔥 5. عرض رد AI فورًا (الحل الأساسي)
+  const tempAiId = "temp-ai-" + Date.now()
+
+  setMessages(prev => [
+    ...prev,
+    {
+      id: tempAiId,
+      role: "ai",
+      content: reply,
+      created_at: new Date().toISOString()
+    }
+  ])
+
+  // 🔵 6. حفظ رد AI بالـ DB
   if (user && conversationId) {
-    await supabase.from("messages").insert([
-      {
-        content: reply,
-        role: "ai",
-        conversation_id: conversationId,
-      },
-    ])
+    const { data: insertedAI } = await supabase
+      .from("messages")
+      .insert([
+        {
+          content: reply,
+          role: "ai",
+          conversation_id: conversationId,
+        },
+      ])
+      .select()
+      .single()
+
+    // استبدال المؤقت بالحقيقي
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === tempAiId ? insertedAI : msg
+      )
+    )
   }
 }
 
