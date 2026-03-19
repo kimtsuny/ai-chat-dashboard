@@ -31,7 +31,7 @@ const [currentConversationId, setCurrentConversationId] = useState<string | null
 const fetchConversations = useCallback(async () => {
 if (!user) return
 
-```
+
 try {
   const { data, error } = await supabase
     .from("conversations")
@@ -49,7 +49,7 @@ try {
 } catch (err) {
   console.error("Unexpected fetch error:", err)
 }
-```
+
 
 }, [user])
 
@@ -67,7 +67,7 @@ const { error } = await supabase
 .delete()
 .eq("id", id)
 
-```
+
   if (error) {
     console.error("Delete error:", error)
     return
@@ -84,7 +84,7 @@ const { error } = await supabase
 } catch (err) {
   console.error("Unexpected delete error:", err)
 }
-```
+
 
 }, [])
 
