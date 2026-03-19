@@ -89,13 +89,19 @@ This project features a secure multi-user system with role-based access control,
 
 ![Interface](./screenshots/interface.png) 
 
+### 💬 Chat
+
+![Chat](./screenshots/chat.png)
+
+### 💬 messaging
+
+![messaging](./screenshots/messaging.png)
+
+
 ### 🧑‍💻 Dashboard
 
 ![Dashboard](./screenshots/dashboard.png)
 
-### 💬 Chat
-
-![Chat](./screenshots/chat.png)
 
 ### 👤 Profile
 
