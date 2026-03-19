@@ -25,60 +25,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
 
-  const fetchUserProfile = useCallback(async (supabaseUser: { id: string; email?: string }) => {
+  const handleAuthChange = useCallback(async (supabaseUser: { id: string; email?: string } | null) => {
+    if (!supabaseUser) {
+      console.log("[Auth] No user, clearing state")
+      setUser(null)
+      setLoading(false)
+      setInitialized(true)
+      return
+    }
+
+    // Step 1: Set user IMMEDIATELY from session data (no network required)
+    // This ensures ChatContext can start fetching conversations right away
+    const basicUser = {
+      id: supabaseUser.id,
+      email: supabaseUser.email ?? "",
+      role: "user",
+      avatar_url: null as string | null,
+      cover_url: null as string | null,
+      created_at: null as string | null,
+    }
+
+    setUser(basicUser)
+    setLoading(false)
+    setInitialized(true)
+
+    console.log("[Auth] User set immediately:", supabaseUser.email)
+
+    // Step 2: Enrich with profile data in background (non-blocking)
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
         .eq("id", supabaseUser.id)
         .maybeSingle()
 
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email!,
-        role: data?.role ?? "user",
-        avatar_url: data?.avatar_url ?? null,
-        cover_url: data?.cover_url ?? null,
-        created_at: data?.created_at ?? null,
-      })
+      if (error) {
+        console.error("[Auth] Profile query error:", error)
+        return
+      }
+
+      if (data) {
+        console.log("[Auth] Profile enriched, role:", data.role)
+        setUser({
+          id: supabaseUser.id,
+          email: supabaseUser.email ?? "",
+          role: data.role ?? "user",
+          avatar_url: data.avatar_url ?? null,
+          cover_url: data.cover_url ?? null,
+          created_at: data.created_at ?? null,
+        })
+      }
     } catch (err) {
-      console.error("[Auth] Profile fetch error:", err)
-    } finally {
-      setLoading(false)
+      console.error("[Auth] Profile fetch failed:", err)
+      // User is already set from step 1, so app still works
     }
   }, [])
 
   useEffect(() => {
     let isMounted = true
 
-    // Single source of truth: onAuthStateChange handles EVERYTHING
-    // - INITIAL_SESSION fires on mount (reads cached token from localStorage)
-    // - SIGNED_IN fires on login
-    // - SIGNED_OUT fires on logout
-    // - TOKEN_REFRESHED fires on token refresh
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (event, session) => {
         console.log("[Auth] onAuthStateChange:", event, session?.user?.email ?? "no user")
 
         if (!isMounted) return
 
-        if (session?.user) {
-          await fetchUserProfile(session.user)
-        } else {
-          setUser(null)
-          setLoading(false)
-        }
-
-        if (isMounted) {
-          setInitialized(true)
-        }
+        await handleAuthChange(session?.user ?? null)
       })
 
     return () => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [fetchUserProfile])
+  }, [handleAuthChange])
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading, initialized }}>
