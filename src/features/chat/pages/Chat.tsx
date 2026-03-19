@@ -115,89 +115,88 @@ const Chat = () => {
 
 
   async function handleSend(text: string) {
+  let conversationId = currentConversationId
 
-    let conversationId = currentConversationId
+  // 🟢 1. عرض رسالة المستخدم فورًا (optimistic)
+  const tempId = "temp-" + Date.now()
 
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        role: "user",
-        content: text
-      }
-    ])
-
-    if (user && !conversationId) {
-
-      creatingConversationRef.current = true
-
-      const { data: conv } = await supabase
-        .from("conversations")
-        .insert([
-          {
-            title: text.slice(0, 20),
-            user_id: user.id,
-          },
-        ])
-        .select()
-        .single()
-
-      conversationId = conv.id
-
-      setCurrentConversationId(conversationId)
-
-      fetchConversations()
-
+  setMessages(prev => [
+    ...prev,
+    {
+      id: tempId,
+      role: "user",
+      content: text,
+      created_at: new Date().toISOString()
     }
+  ])
 
-    if (user && conversationId) {
+  // 🟢 2. إنشاء محادثة إذا ماكو
+  if (user && !conversationId) {
+    creatingConversationRef.current = true
 
-      await supabase.from("messages").insert([
+    const { data: conv } = await supabase
+      .from("conversations")
+      .insert([
+        {
+          title: text.slice(0, 20),
+          user_id: user.id,
+        },
+      ])
+      .select()
+      .single()
+
+    conversationId = conv.id
+    setCurrentConversationId(conversationId)
+    fetchConversations()
+  }
+
+  // 🟢 3. حفظ رسالة المستخدم بالـ DB
+  if (user && conversationId) {
+    const { data: inserted } = await supabase
+      .from("messages")
+      .insert([
         {
           content: text,
           role: "user",
           conversation_id: conversationId,
         },
       ])
+      .select()
+      .single()
 
-    }
-
-    setTyping(true)
-
-    const { data, error } = await supabase.functions.invoke("chat", {
-      body: { message: text }
-    })
-
-    setTyping(false)
-
-    if (error) return
-
-    const reply = data?.reply
-    if (!reply) return
-
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        role: "ai",
-        content: reply
-      }
-    ])
-
-    if (user && conversationId) {
-
-      await supabase.from("messages").insert([
-        {
-          content: reply,
-          role: "ai",
-          conversation_id: conversationId,
-        },
-      ])
-
-    }
-
+    // 🧠 استبدال الرسالة المؤقتة بالرسالة الحقيقية
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === tempId ? inserted : msg
+      )
+    )
   }
 
+  // 🟡 4. typing indicator
+  setTyping(true)
+
+  const { data, error } = await supabase.functions.invoke("chat", {
+    body: { message: text }
+  })
+
+  setTyping(false)
+
+  if (error) return
+
+  const reply = data?.reply
+  if (!reply) return
+
+  // 🔵 5. نحفظ رد AI فقط (بدون عرض محلي)
+  if (user && conversationId) {
+    await supabase.from("messages").insert([
+      {
+        content: reply,
+        role: "ai",
+        conversation_id: conversationId,
+      },
+    ])
+  }
+}
 
   return (
     <div className="flex flex-1 flex-col min-h-0 w-full bg-gradient-to-b from-[#121217] via-[#0f0f11] to-[#0f0f11]">
@@ -234,6 +233,29 @@ const Chat = () => {
             {typing && (
               <div className="flex justify-start px-4 py-3 max-w-3xl mx-auto w-full">
                 <span className="typing-dot" />
+                    <style>
+{`
+  .typing-dot {
+    width: 10px;
+    height: 10px;
+  background-color: #a855f7;
+    border-radius: 9999px;
+    animation: pulseDot 2s ease-in-out infinite;
+    
+  }
+
+  @keyframes pulseDot {
+    0%, 100% {
+      transform: scale(1.1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.4);
+      opacity: 1;
+    }
+  }
+`}
+</style>
               </div>
             )}
 
