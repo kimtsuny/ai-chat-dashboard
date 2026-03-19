@@ -1,5 +1,12 @@
 import { supabase } from "@/lib/supabase"
-import { createContext, useState, ReactNode, useContext, useEffect, useCallback } from "react"
+import {
+  createContext,
+  useState,
+  ReactNode,
+  useContext,
+  useEffect,
+  useCallback
+} from "react"
 
 type User = {
   id: string
@@ -25,24 +32,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
 
-  const handleAuthChange = useCallback(async (supabaseUser: { id: string; email?: string } | null) => {
+  // 🔥 handler موحد لكل الحالات
+  const handleAuthChange = useCallback(async (supabaseUser: any) => {
+
     if (!supabaseUser) {
-      console.log("[Auth] No user, clearing state")
+      console.log("[Auth] No user")
       setUser(null)
       setLoading(false)
       setInitialized(true)
       return
     }
 
-    // Step 1: Set user IMMEDIATELY from session data (no network required)
-    // This ensures ChatContext can start fetching conversations right away
+    // ✅ 1. حط user مباشرة (بدون انتظار)
     const basicUser = {
       id: supabaseUser.id,
       email: supabaseUser.email ?? "",
       role: "user",
-      avatar_url: null as string | null,
-      cover_url: null as string | null,
-      created_at: null as string | null,
+      avatar_url: null,
+      cover_url: null,
+      created_at: null,
     }
 
     setUser(basicUser)
@@ -51,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     console.log("[Auth] User set immediately:", supabaseUser.email)
 
-    // Step 2: Enrich with profile data in background (non-blocking)
+    // ✅ 2. تحميل profile بالخلفية (اختياري)
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -60,12 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle()
 
       if (error) {
-        console.error("[Auth] Profile query error:", error)
+        console.error("[Auth] Profile error:", error)
         return
       }
 
       if (data) {
-        console.log("[Auth] Profile enriched, role:", data.role)
         setUser({
           id: supabaseUser.id,
           email: supabaseUser.email ?? "",
@@ -74,19 +81,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           cover_url: data.cover_url ?? null,
           created_at: data.created_at ?? null,
         })
+
+        console.log("[Auth] Profile enriched")
       }
+
     } catch (err) {
       console.error("[Auth] Profile fetch failed:", err)
-      // User is already set from step 1, so app still works
     }
+
   }, [])
 
   useEffect(() => {
     let isMounted = true
 
+    // 🔥 1. أهم خطوة: جلب session فورًا بعد refresh
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("[Auth] getSession:", session?.user?.email ?? "no session")
+
+      if (!isMounted) return
+
+      await handleAuthChange(session?.user ?? null)
+    })
+
+    // 🔥 2. listener للتغييرات (login / logout)
     const { data: { subscription } } =
       supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log("[Auth] onAuthStateChange:", event, session?.user?.email ?? "no user")
+        console.log("[Auth] onAuthStateChange:", event)
 
         if (!isMounted) return
 
@@ -97,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted = false
       subscription.unsubscribe()
     }
+
   }, [handleAuthChange])
 
   return (
