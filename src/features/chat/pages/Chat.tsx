@@ -40,85 +40,78 @@ const Chat = () => {
 
   // مسح الرسائل عند تغيير المحادثة
   useEffect(() => {
+  if (!currentConversationId) return
 
-    if (!currentConversationId) return
+  if (creatingConversationRef.current) {
+    creatingConversationRef.current = false
+    return
+  }
 
-    if (creatingConversationRef.current) {
-      creatingConversationRef.current = false
-      return
-    }
+  let isActive = true
 
+  const loadMessages = async () => {
     setMessages([])
+    setLoading(true)
 
-  }, [currentConversationId])
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", currentConversationId)
+      .order("created_at", { ascending: true })
 
+    if (!isActive) return
 
-  // تحميل الرسائل
-  useEffect(() => {
+    if (data) setMessages(data)
 
-    async function fetchMessages() {
+    setLoading(false)
+  }
 
-      if (!currentConversationId) return
+  loadMessages()
 
-      setLoading(true)
+  return () => {
+    isActive = false
+  }
 
-      const { data } = await supabase
-        .from("messages")
-        .select("*")
-        .eq("conversation_id", currentConversationId)
-        .order("created_at", { ascending: true })
-
-      if (data) setMessages(data)
-
-      setLoading(false)
-
-    }
-
-    fetchMessages()
-
-  }, [currentConversationId])
+}, [currentConversationId])
 
 
   // realtime
   useEffect(() => {
+  if (!currentConversationId) return
 
-    if (!currentConversationId) return
+  const channel = supabase
+    .channel(`messages-${currentConversationId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: `conversation_id=eq.${currentConversationId}`,
+      },
+      (payload) => {
+      setMessages((prev) => {
+  const exists = prev.some(
+    (m) => m.id === payload.new.id
+  )
 
-    const channel = supabase
-      .channel("messages-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${currentConversationId}`,
-        },
-        (payload) => {
+  if (exists) return prev
 
-          setMessages((prev) => {
+  const updated = [...prev, payload.new]
 
-            const exists = prev.find(
-              (m) =>
-                m.role === payload.new.role &&
-                m.content === payload.new.content
-            )
+  return updated.sort(
+    (a, b) =>
+      new Date(a.created_at) - new Date(b.created_at)
+  )
+})
+      }
+    )
+    .subscribe()
 
-            if (exists) return prev
-
-            return [...prev, payload.new]
-
-          })
-
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-
-  }, [currentConversationId])
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [currentConversationId])
 
 
   async function handleSend(text: string) {
