@@ -32,45 +32,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
 
-  // 🔥 handler موحد لكل الحالات
+  // 🔥 handler موحد
   const handleAuthChange = useCallback(async (supabaseUser: any) => {
 
     if (!supabaseUser) {
-      console.log("[Auth] No user")
       setUser(null)
       setLoading(false)
       setInitialized(true)
       return
     }
 
-    // ✅ 1. حط user مباشرة (بدون انتظار)
-    const basicUser = {
+    // ✅ 1. set user مباشرة
+    setUser({
       id: supabaseUser.id,
       email: supabaseUser.email ?? "",
       role: "user",
       avatar_url: null,
       cover_url: null,
       created_at: null,
-    }
+    })
 
-    setUser(basicUser)
     setLoading(false)
     setInitialized(true)
 
-    console.log("[Auth] User set immediately:", supabaseUser.email)
-
-    // ✅ 2. تحميل profile بالخلفية (اختياري)
+    // ✅ 2. جلب profile خارج callback (آمن)
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("role, avatar_url, cover_url, created_at")
         .eq("id", supabaseUser.id)
         .maybeSingle()
-
-      if (error) {
-        console.error("[Auth] Profile error:", error)
-        return
-      }
 
       if (data) {
         setUser({
@@ -81,12 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           cover_url: data.cover_url ?? null,
           created_at: data.created_at ?? null,
         })
-
-        console.log("[Auth] Profile enriched")
       }
 
     } catch (err) {
-      console.error("[Auth] Profile fetch failed:", err)
+      console.error("Profile error:", err)
     }
 
   }, [])
@@ -94,23 +83,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true
 
-    // 🔥 1. أهم خطوة: جلب session فورًا بعد refresh
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("[Auth] getSession:", session?.user?.email ?? "no session")
+    // 🔥 1. أهم خطوة: getSession بالبداية
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[Auth] getSession:", session?.user?.email ?? "no user")
 
       if (!isMounted) return
 
-      await handleAuthChange(session?.user ?? null)
+      handleAuthChange(session?.user ?? null)
     })
 
-    // 🔥 2. listener للتغييرات (login / logout)
+    // 🔥 2. listener بدون async (مهم جدًا)
     const { data: { subscription } } =
-      supabase.auth.onAuthStateChange(async (event, session) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         console.log("[Auth] onAuthStateChange:", event)
 
         if (!isMounted) return
 
-        await handleAuthChange(session?.user ?? null)
+        // ❗ مهم: نخليها خارج callback
+        setTimeout(() => {
+          handleAuthChange(session?.user ?? null)
+        }, 0)
       })
 
     return () => {
