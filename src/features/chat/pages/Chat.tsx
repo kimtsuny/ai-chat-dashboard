@@ -16,7 +16,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false)
   const [typing, setTyping] = useState(false)
 
-  const { user } = useAuth()
+  const { user, initialized } = useAuth()
   const { currentConversationId, setCurrentConversationId, fetchConversations } = useChat()
 
   const creatingConversationRef = useRef(false)
@@ -24,11 +24,11 @@ const Chat = () => {
   // ⭐ جلب المحادثات عند دخول الصفحة
   useEffect(() => {
 
-    if (!user) return
+    if (!initialized || !user) return
 
     fetchConversations()
 
-  }, [user])
+  }, [initialized, user])
 
 
   // reset عند تغيير المستخدم
@@ -40,78 +40,78 @@ const Chat = () => {
 
   // مسح الرسائل عند تغيير المحادثة
   useEffect(() => {
-  if (!currentConversationId) return
+    if (!currentConversationId) return
 
-  if (creatingConversationRef.current) {
-    creatingConversationRef.current = false
-    return
-  }
+    if (creatingConversationRef.current) {
+      creatingConversationRef.current = false
+      return
+    }
 
-  let isActive = true
+    let isActive = true
 
-  const loadMessages = async () => {
-    setMessages([])
-    setLoading(true)
+    const loadMessages = async () => {
+      setMessages([])
+      setLoading(true)
 
-    const { data } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", currentConversationId)
-      .order("created_at", { ascending: true })
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", currentConversationId)
+        .order("created_at", { ascending: true })
 
-    if (!isActive) return
+      if (!isActive) return
 
-    if (data) setMessages(data)
+      if (data) setMessages(data)
 
-    setLoading(false)
-  }
+      setLoading(false)
+    }
 
-  loadMessages()
+    loadMessages()
 
-  return () => {
-    isActive = false
-  }
+    return () => {
+      isActive = false
+    }
 
-}, [currentConversationId])
+  }, [currentConversationId])
 
 
   // realtime
   useEffect(() => {
-  if (!currentConversationId) return
+    if (!currentConversationId) return
 
-  const channel = supabase
-    .channel(`messages-${currentConversationId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `conversation_id=eq.${currentConversationId}`,
-      },
-      (payload) => {
-      setMessages((prev) => {
-  const exists = prev.some(
-    (m) => m.id === payload.new.id
-  )
+    const channel = supabase
+      .channel(`messages-${currentConversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${currentConversationId}`,
+        },
+        (payload) => {
+          setMessages((prev) => {
+            const exists = prev.some(
+              (m) => m.id === payload.new.id
+            )
 
-  if (exists) return prev
+            if (exists) return prev
 
-  const updated = [...prev, payload.new]
+            const updated = [...prev, payload.new]
 
-  return updated.sort(
-    (a, b) =>
-      new Date(a.created_at) - new Date(b.created_at)
-  )
-})
-      }
-    )
-    .subscribe()
+            return updated.sort(
+              (a, b) =>
+                new Date(a.created_at) - new Date(b.created_at)
+            )
+          })
+        }
+      )
+      .subscribe()
 
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}, [currentConversationId])
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [currentConversationId])
 
 
   async function handleSend(text: string) {

@@ -21,21 +21,28 @@ import {
 
 import { cn } from "@/lib/utils"
 import { useChat } from "@/context/ChatContext"
+import { useAuth } from "@/context/AuthContext"
 import { useEffect, useState } from "react"
 
 export function ConversationList() {
- const {
-  conversations,
-  searchQuery,
-  fetchConversations,
-  currentConversationId,
-  setCurrentConversationId,
-  deleteConversation
-} = useChat()
+  const { user, initialized } = useAuth()
+  const {
+    conversations,
+    searchQuery,
+    fetchConversations,
+    currentConversationId,
+    setCurrentConversationId,
+    deleteConversation,
+  } = useChat()
 
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!initialized || !user) {
+      setLoading(false)
+      return
+    }
+
     const load = async () => {
       setLoading(true)
       await fetchConversations()
@@ -43,11 +50,11 @@ export function ConversationList() {
     }
 
     load()
-  }, [])
+  }, [initialized, user, fetchConversations])
 
   const filteredConversations = conversations.filter((conv) =>
-  conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-)
+    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
